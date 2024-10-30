@@ -21,7 +21,7 @@ async function initializeBrowser() {
 
 app.use(express.json());
 
-app.post('/api/shade-profile', async (req, res) => {
+app.post('/api/shade', async (req, res) => {
   try {
     const browser = await initializeBrowser();
     const page = await browser.newPage();
@@ -191,7 +191,7 @@ app.post('/api/shade-profile', async (req, res) => {
       });
     });
 
-    // await page.close();
+    await page.close();
     res.json({shadeProfile});
   } catch (error) {
     console.error('Error generating shade profile:', error);
@@ -202,7 +202,7 @@ app.post('/api/shade-profile', async (req, res) => {
 app.listen(port, async () => {
   await initializeBrowser();
   console.log(
-      `ShadeMap API is running at http://localhost:${port}/api/shade-profile`);
+      `ShadeMap API is running at http://localhost:${port}/api/shade`);
 });
 
 process.on('SIGINT', async () => {
