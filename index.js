@@ -11,7 +11,7 @@ async function initializeBrowser() {
   if (!browser) {
     browser = await puppeteer.launch(
         {
-          headless: false,
+          headless: true,
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
           defaultViewport: {height: 300, width: 300}
         });
@@ -22,7 +22,6 @@ async function initializeBrowser() {
 app.use(express.json());
 
 app.post('/api/shade-profile', async (req, res) => {
-  const {GeoJSON, dates} = req.body;
   try {
     const browser = await initializeBrowser();
     const page = await browser.newPage();
@@ -54,11 +53,7 @@ app.post('/api/shade-profile', async (req, res) => {
     </body>
     <script>
       document.addEventListener('DOMContentLoaded', async () => {
-        const TILE_SIZE = 512;
         const BUILDING_ZOOM = 15;
-    
-        const geoJson = ${JSON.stringify(GeoJSON)}
-        const dateArr = ${JSON.stringify(dates)}.map(d => new Date(parseInt(d)));
     
         const numPoints = 10;
         const boundingBoxes = ${JSON.stringify(data)}
