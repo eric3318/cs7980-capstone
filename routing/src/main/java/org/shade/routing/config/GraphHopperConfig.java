@@ -2,8 +2,6 @@ package org.shade.routing.config;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GHUtility;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
