@@ -13,7 +13,7 @@ async function initializeBrowser() {
         {
           headless: false,
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
-          defaultViewport: null
+          defaultViewport: {height: 300, width: 300}
         });
   }
   return browser;
@@ -51,6 +51,7 @@ app.post('/api/shade-profile', async (req, res) => {
     </head>
     <body>
     <div id="map"></div>
+    </body>
     <script>
       document.addEventListener('DOMContentLoaded', async () => {
         const TILE_SIZE = 512;
@@ -64,8 +65,8 @@ app.post('/api/shade-profile', async (req, res) => {
         
         const groups = []
         
-        for (let i = 0; i < 1; i++) {
-          let edges = boundingBoxes[i]
+        for (let i = 0; i < boundingBoxes.length ; i++) {
+          let edges = boundingBoxes[i].edges
           const group = []
           edges.forEach(edge => {
             const temp = []
@@ -89,13 +90,15 @@ app.post('/api/shade-profile', async (req, res) => {
           });
           groups.push(group)
         }
+        
+        let {minLon, maxLon, minLat, maxLat} = boundingBoxes[0].boundingBox        
+        let initialCenter = turf.center(turf.bboxPolygon([minLon, minLat, maxLon, maxLat]));
 
-    
         mapboxgl.accessToken = "pk.eyJ1IjoiaGFubm5pZTIiLCJhIjoiY20xeDZ1OTR0MHJqaDJxcTF0dWdsNjQxaCJ9.g_kbtpQtag20otKxXyyltg";
         const map = new mapboxgl.Map({
           container: 'map',
           zoom: 15,
-          center: {lng: -122.980325, lat: 49.24353},
+          center: initialCenter.geometry.coordinates,
           style: 'mapbox://styles/mapbox/streets-v11',
           hash: true
         });
@@ -142,13 +145,10 @@ app.post('/api/shade-profile', async (req, res) => {
           }).addTo(map);
     
           let accumulatedOutput = [];
-          for (let i = 0; i < 1; i++) {
+          for (let i = 0; i < groups.length; i++) {
             const group = groups[i];
-            const minLon = -122.98701;
-            const maxLon = -122.97363999999999;
-            const minLat = 49.24033;
-            const maxLat = 49.24673;
-            
+            const {minLon, maxLon, minLat, maxLat} = boundingBoxes[i].boundingBox        
+
             const bbox = [minLon, minLat, maxLon, maxLat];
             
             const bboxPolygon = turf.bboxPolygon(bbox);
@@ -160,19 +160,17 @@ app.post('/api/shade-profile', async (req, res) => {
             });
           
             map.setCenter(center.geometry.coordinates).setZoom(BUILDING_ZOOM);
-            console.log(center.geometry.coordinates)
             const mapboxLoaded = mapLoaded(map);
-            console.log(group)
           
-            const locations = group.flatMap(subEdge => 
-                subEdge.map(point => ({ lng: point[0], lat: point[1]}))
+            const locations = group.flatMap(edges=> edges.flatMap(subEdge =>
+                subEdge.map(point => ({ lng: point[0], lat: point[1]})))
               )
-            
+
             await Promise.all([mapboxLoaded, shadeMapLoaded]);
-          
+                      
             const output = shadeMap._generateShadeProfile({
-              locations,
-              dates:[new Date(1681455600000)],
+              locations: locations,
+              dates:[new Date(1713232200000)],
               sunColor: [255, 255, 255, 255],
               shadeColor: [0, 0, 0, 255]
             });
@@ -182,7 +180,6 @@ app.post('/api/shade-profile', async (req, res) => {
     });
     })
     </script>
-    </body>
     </html>
     `);
 
