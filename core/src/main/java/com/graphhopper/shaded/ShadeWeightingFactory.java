@@ -18,7 +18,11 @@ public class ShadeWeightingFactory extends DefaultWeightingFactory {
 
   @Override
   public Weighting createWeighting(Profile profile, PMap hints, boolean disableTurnCosts) {
-    return null;
+    if ("shaded".equalsIgnoreCase(profile.getName())){
+      throw new IllegalArgumentException("Only shaded profile is supported");
+    }
+    // TODO: determine accessEnc and speedEnc
+    ShortestWeighting shortestWeighting = new ShortestWeighting();
+    return new ShadedWeighting( shortestWeighting, shadeManager);
   }
-
 }

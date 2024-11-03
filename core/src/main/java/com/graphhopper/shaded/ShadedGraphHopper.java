@@ -14,7 +14,7 @@ public class ShadedGraphHopper extends GraphHopper {
 
   @Override
   protected WeightingFactory createWeightingFactory() {
-    return new ShadeWeightingFactory(super.getBaseGraph(), getEncodingManager(), shadeManager);
+    return new ShadeWeightingFactory(super.getBaseGraph(), super.getEncodingManager(), shadeManager);
   }
 
   public void attachShadeData(Map<Integer, List<List<Integer>>> data){

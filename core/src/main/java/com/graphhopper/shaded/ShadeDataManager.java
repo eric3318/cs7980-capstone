@@ -9,19 +9,23 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ShadeDataManager {
+public class ShadeDataManager {
   Logger logger = LoggerFactory.getLogger(ShadeDataManager.class);
 
   private final Map<Integer, List<EdgeShadeProfile>> shadeMap = new HashMap<>();
 
-  public double calcShadeCoverage(EdgeIteratorState edge) {
-    int edgeId = edge.getEdge();
+  public double calcShadeCoverage(EdgeIteratorState edgeState) {
+    int edgeId = edgeState.getEdge();
     if (!shadeMap.containsKey(edgeId) || shadeMap.get(edgeId).isEmpty()) {
       throw new RuntimeException("Shade profile for the given edge not found");
     }
     List<EdgeShadeProfile> edgeShadeProfiles = shadeMap.get(edgeId);
     // add coverage calculation
     return 0;
+  }
+
+  public boolean withinRange(EdgeIteratorState edgeState){
+    return shadeMap.containsKey(edgeState.getEdge());
   }
 
   public void addEdgeShadeProfiles (Map<Integer, List<List<Integer>>> data) {
