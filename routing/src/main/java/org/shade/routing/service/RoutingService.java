@@ -1,7 +1,11 @@
 package org.shade.routing.service;
 
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.shaded.ShadedGraphHopper;
+import com.graphhopper.shaded.utils.GraphUtil;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndex.Visitor;
@@ -14,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.shade.routing.dto.BBoxDto;
-import org.shade.routing.dto.BoundingBoxDto;
-import org.shade.routing.utils.MapUtil;
+import org.shade.routing.dto.BBoxLimits;
+import org.shade.routing.dto.RouteRequest;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,24 +28,21 @@ public class RoutingService {
 
   private final GraphHopper hopper;
 
-  public void getRoute() {
+  public GHResponse getRoute(RouteRequest routeRequest) {
+    ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
+    GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
+        routeRequest.toLat(), routeRequest.toLon());
+    return hopper.route(ghRequest);
   }
 
-  public List<BBoxDto> getBoundingBoxes(double minLon, double maxLon, double minLat,
-      double maxLat) {
-    return MapUtil.getBBoxCells(-122.98701, -122.96027, 49.24033, 49.25313).stream()
-        .map((bBox ->
-            new BBoxDto(bBox.minLon, bBox.maxLon, bBox.minLat, bBox.maxLat))
-        ).toList();
-  }
-
-  public List<BoundingBoxDto> getEdges(double minLon, double maxLon, double minLat,
+  public List<BBoxDto> getEdges(double minLon, double maxLon, double minLat,
       double maxLat) {
     LocationIndex locationIndex = hopper.getLocationIndex();
-    List<BBox> bBoxList = MapUtil.getBBoxCells(-122.98701, -122.96027, 49.24033, 49.25313);
+    List<BBox> bBoxList = GraphUtil.getBBoxCells(minLon, maxLon, minLat, maxLat);
     Graph graph = hopper.getBaseGraph();
-    List<BoundingBoxDto> result = new ArrayList<>();
+    List<BBoxDto> result = new ArrayList<>();
     List<List<Double>> cell = new ArrayList<>();
+
     Visitor v = i -> {
       EdgeIteratorState iteratorState = graph.getEdgeIteratorState(i, Integer.MIN_VALUE);
       PointList geometry = iteratorState.fetchWayGeometry(FetchMode.ALL);
@@ -52,13 +53,15 @@ public class RoutingService {
         edge.add(ghPoint.getLon());
         edge.add(ghPoint.getLat());
       }
+
       cell.add(edge);
     };
+
     for (BBox bBox : bBoxList) {
       locationIndex.query(bBox, v);
-      BBoxDto bBoxDto = new BBoxDto(bBox.minLon, bBox.maxLon, bBox.minLat, bBox.maxLat);
-      BoundingBoxDto boundingBoxDto = new BoundingBoxDto(bBoxDto, List.copyOf(cell));
-      result.add(boundingBoxDto);
+      BBoxLimits bBoxLimits = new BBoxLimits(bBox.minLon, bBox.maxLon, bBox.minLat, bBox.maxLat);
+      BBoxDto bBoxDto = new BBoxDto(bBoxLimits, List.copyOf(cell));
+      result.add(bBoxDto);
       cell.clear();
     }
     return result;
