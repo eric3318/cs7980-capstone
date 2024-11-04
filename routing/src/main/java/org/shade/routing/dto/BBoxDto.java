@@ -1,6 +1,7 @@
 package org.shade.routing.dto;
 
-public record BBoxDto(double minLon, double maxLon, double minLat,
-                      double maxLat) {
+import java.util.List;
+
+public record BBoxDto(BBoxLimits limits, List<List<Double>> edges) {
 
 }
