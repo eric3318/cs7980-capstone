@@ -2,7 +2,7 @@ package org.shade.routing.config;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.shaded.ShadedGraphHopper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,14 +11,13 @@ public class GraphHopperConfig {
 
   @Bean
   public GraphHopper graphHopper() {
-    GraphHopper graphHopper = new GraphHopper();
-    graphHopper.setOSMFile("routing/src/main/resources/static/british-columbia-latest.osm.pbf");
-    graphHopper.setGraphHopperLocation("routing/target/graph-cache");
-    graphHopper.setEncodedValuesString("car_access, car_average_speed");
-    graphHopper.setProfiles(
-        new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json")));
-    graphHopper.importOrLoad();
-    return graphHopper;
+    GraphHopper hopper = new ShadedGraphHopper();
+    hopper.setOSMFile("routing/src/main/resources/static/british-columbia-latest.osm.pbf");
+    hopper.setGraphHopperLocation("routing/target/graph-cache");
+    hopper.setEncodedValuesString("car_access, car_average_speed");
+    hopper.setProfiles(
+        new Profile("shaded"));
+    hopper.importOrLoad();
+    return hopper;
   }
-
 }
