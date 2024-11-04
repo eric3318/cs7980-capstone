@@ -20,7 +20,7 @@ public class ShadedWeighting extends AbstractAdjustedWeighting {
     }
     double distanceWeight = superWeighting.calcEdgeWeight(edgeState, reverse);
     // use formula
-    return 0;
+    return distanceWeight;
   }
 
   @Override
