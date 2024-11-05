@@ -19,6 +19,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.shade.routing.dto.BBoxDto;
 import org.shade.routing.dto.BBoxLimits;
+import org.shade.routing.dto.Edge;
 import org.shade.routing.dto.RouteRequest;
 import org.springframework.stereotype.Service;
 
@@ -32,32 +33,36 @@ public class RoutingService {
     ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
     GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
         routeRequest.toLat(), routeRequest.toLon());
-    return hopper.route(ghRequest);
+    ghRequest.setProfile("shaded");
+    GHResponse ghResponse = hopper.route(ghRequest);
+    ((ShadedGraphHopper) hopper).clearShadeData();
+    return ghResponse;
   }
 
   public List<BBoxDto> getEdges(double minLon, double maxLon, double minLat,
       double maxLat) {
     LocationIndex locationIndex = hopper.getLocationIndex();
-    List<BBox> bBoxList = GraphUtil.getBBoxCells(minLon, maxLon, minLat, maxLat);
+    List<BBox> bBoxCells = GraphUtil.getBBoxCells(minLon, maxLon, minLat, maxLat);
     Graph graph = hopper.getBaseGraph();
     List<BBoxDto> result = new ArrayList<>();
-    List<List<Double>> cell = new ArrayList<>();
+    List<Edge> cell = new ArrayList<>();
 
     Visitor v = i -> {
-      EdgeIteratorState iteratorState = graph.getEdgeIteratorState(i, Integer.MIN_VALUE);
-      PointList geometry = iteratorState.fetchWayGeometry(FetchMode.ALL);
-      List<Double> edge = new ArrayList<>();
+      EdgeIteratorState edgeState = graph.getEdgeIteratorState(i, Integer.MIN_VALUE);
+      PointList geometry = edgeState.fetchWayGeometry(FetchMode.ALL);
+      List<Double> points = new ArrayList<>();
 
       for (int idx = 0; idx < geometry.size(); idx++) {
         GHPoint ghPoint = geometry.get(idx);
-        edge.add(ghPoint.getLon());
-        edge.add(ghPoint.getLat());
+        points.add(ghPoint.getLon());
+        points.add(ghPoint.getLat());
       }
 
+      Edge edge = new Edge(edgeState.getEdge(), points);
       cell.add(edge);
     };
 
-    for (BBox bBox : bBoxList) {
+    for (BBox bBox : bBoxCells) {
       locationIndex.query(bBox, v);
       BBoxLimits bBoxLimits = new BBoxLimits(bBox.minLon, bBox.maxLon, bBox.minLat, bBox.maxLat);
       BBoxDto bBoxDto = new BBoxDto(bBoxLimits, List.copyOf(cell));

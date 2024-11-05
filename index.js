@@ -1,9 +1,11 @@
 import express from 'express';
 import puppeteer from 'puppeteer';
-import {data} from './data.js';
 
 const app = express();
 const port = 3000;
+
+app.use(express.json({limit: '10mb'}));
+app.use(express.urlencoded({limit: '10mb', extended: true}));
 
 let browser;
 
@@ -22,6 +24,7 @@ async function initializeBrowser() {
 app.use(express.json());
 
 app.post('/api/shade', async (req, res) => {
+  const {bBoxes} = req.body;
   try {
     const browser = await initializeBrowser();
     const page = await browser.newPage();
@@ -56,37 +59,44 @@ app.post('/api/shade', async (req, res) => {
         const BUILDING_ZOOM = 15;
     
         const numPoints = 10;
-        const boundingBoxes = ${JSON.stringify(data)}
+        const boundingBoxes = ${JSON.stringify(bBoxes)}
         
         const groups = []
+        const groupMetaDataArr = []
         
         for (let i = 0; i < boundingBoxes.length ; i++) {
           let edges = boundingBoxes[i].edges
           const group = []
+          const groupMetaData = []
           edges.forEach(edge => {
-            const temp = []
-            let prev = edge.slice(0, 2)
+            const edgeInfo = {edgeId:edge.edgeId, numSubEdges: 0}
+            const points = edge.points
+            const currEdge = []
+            let prev = points.slice(0, 2)
             let idx = 2
-            while (idx < edge.length - 1) {
-              let curr = edge.slice(idx, idx + 2);
+            while (idx < points.length) {
+              let curr = points.slice(idx, idx + 2);
               let route = turf.lineString([prev, curr]);
               let length = turf.length(route)
               let step = length / numPoints;
-              let points = []
+              let subEdgePoints = []
               for (let j = 0; j < numPoints; j++) {
                 let point = turf.along(route, step * j)
-                points.push(point.geometry.coordinates)
+                subEdgePoints.push(point.geometry.coordinates)
               }
-              temp.push(points)
+              currEdge.push(subEdgePoints)
+              edgeInfo.numSubEdges += 1
               prev = curr
               idx += 2;
             }
-            group.push(temp)
+            groupMetaData.push(edgeInfo)
+            group.push(currEdge)
           });
           groups.push(group)
+          groupMetaDataArr.push(groupMetaData)
         }
         
-        let {minLon, maxLon, minLat, maxLat} = boundingBoxes[0].boundingBox        
+        let {minLon, maxLon, minLat, maxLat} = boundingBoxes[0].limits        
         let initialCenter = turf.center(turf.bboxPolygon([minLon, minLat, maxLon, maxLat]));
 
         mapboxgl.accessToken = "pk.eyJ1IjoiaGFubm5pZTIiLCJhIjoiY20xeDZ1OTR0MHJqaDJxcTF0dWdsNjQxaCJ9.g_kbtpQtag20otKxXyyltg";
@@ -139,10 +149,11 @@ app.post('/api/shade', async (req, res) => {
             },
           }).addTo(map);
     
-          let accumulatedOutput = [];
+          let accumulatedOutput = {};
           for (let i = 0; i < groups.length; i++) {
             const group = groups[i];
-            const {minLon, maxLon, minLat, maxLat} = boundingBoxes[i].boundingBox        
+            const metaData = groupMetaDataArr[i]
+            const {minLon, maxLon, minLat, maxLat} = boundingBoxes[i].limits        
 
             const bbox = [minLon, minLat, maxLon, maxLat];
             
@@ -169,7 +180,23 @@ app.post('/api/shade', async (req, res) => {
               sunColor: [255, 255, 255, 255],
               shadeColor: [0, 0, 0, 255]
             });
-            accumulatedOutput.push(...Array.from(output));
+            const outputArr = Array.from(output)
+            
+            let outputIdx = 0;
+            for (let j = 0; j < metaData.length; j++){
+              let edgeInfo = metaData[j]
+              let count = edgeInfo.numSubEdges * numPoints * 4;
+              let start = outputIdx
+              outputIdx += count
+              
+              let edgeOutput = [];
+              for (let k = 0; k < edgeInfo.numSubEdges; k++) {
+                let subEdgeStart = start + k * numPoints * 4;
+                let subEdgeEnd = subEdgeStart + numPoints * 4;
+                edgeOutput.push(outputArr.slice(subEdgeStart, subEdgeEnd));
+              }
+              accumulatedOutput[edgeInfo.edgeId] = edgeOutput;
+            }
           }
           window.shadeProfileOutput = accumulatedOutput;
     });
@@ -182,7 +209,7 @@ app.post('/api/shade', async (req, res) => {
       return new Promise((resolve) => {
         const checkShadeProfile = () => {
           if (window.shadeProfileOutput) {
-            resolve(Array.from(window.shadeProfileOutput));
+            resolve(window.shadeProfileOutput);
           } else {
             setTimeout(checkShadeProfile, 100);
           }
@@ -202,7 +229,7 @@ app.post('/api/shade', async (req, res) => {
 app.listen(port, async () => {
   await initializeBrowser();
   console.log(
-      `ShadeMap API is running at http://localhost:${port}/api/shade`);
+      `ShadeMap API running at http://localhost:${port}/api/shade`);
 });
 
 process.on('SIGINT', async () => {
