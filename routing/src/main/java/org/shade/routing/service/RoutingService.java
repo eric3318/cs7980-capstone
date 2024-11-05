@@ -33,6 +33,7 @@ public class RoutingService {
     ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
     GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
         routeRequest.toLat(), routeRequest.toLon());
+    ghRequest.setProfile("shaded");
     return hopper.route(ghRequest);
   }
 
