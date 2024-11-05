@@ -229,7 +229,7 @@ app.post('/api/shade', async (req, res) => {
 app.listen(port, async () => {
   await initializeBrowser();
   console.log(
-      `ShadeMap API running at http://localhost:${port}/api/shade`);
+      `ShadeMap service running at http://localhost:${port}/api/shade`);
 });
 
 process.on('SIGINT', async () => {

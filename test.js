@@ -1,53 +1,58 @@
-import {data} from "./data.js";
-import * as turf from '@turf/turf';
+let response;
 
-const TILE_SIZE = 512;
-const BUILDING_ZOOM = 15;
+let params = {
+  minLon: -122.98701,
+  maxLon: -122.96027,
+  minLat: 49.24033,
+  maxLat: 49.25313
+}
+let queryString = "?"
 
-const numPoints = 10;
-const boundingBoxes = data;
-
-const groups = []
-
-for (let i = 0; i < boundingBoxes.length; i++) {
-  let edges = boundingBoxes[i]
-  const group = []
-  edges.forEach(edge => {
-    const temp = []
-    let prev = edge.slice(0, 2)
-    let idx = 2
-    while (idx < edge.length - 1) {
-      let curr = edge.slice(idx, idx + 2);
-      let route = turf.lineString([prev, curr]);
-      let length = turf.length(route)
-      let step = length / numPoints;
-      let points = []
-      for (let j = 0; j < numPoints; j++) {
-        let point = turf.along(route, step * j)
-        points.push(point.geometry.coordinates)
-      }
-      temp.push(points)
-      prev = curr
-      idx += 2;
-    }
-    group.push(temp)
-  });
-  groups.push(group)
+for (let key in params) {
+  let val = params[key]
+  queryString += `${key}=${val}&`;
 }
 
-// for (let i = 0; i < groups.length; i++) {
-//   let group = groups[i]
-//   const locations = group.flatMap(edge =>
-//       edge.flatMap(subEdge =>
-//           subEdge.map(point => ({lng: point[0], lat: point[1]}))
-//       )
-//   );
-// }
+try {
+  response = await fetch(`http://localhost:8081/api/edges${queryString}`);
+  if (!response.ok) {
+    throw new Error("Error fetching graph edges from routing service");
+  }
+  let edgesData = await response.json();
 
+  response = await fetch(`http://localhost:3000/api/shade`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({bBoxes: edgesData})
+  });
+  if (!response.ok) {
+    throw new Error("Error fetching graph edges from routing service");
+  }
+  let shadeData = await response.json();
 
+  let routeRequest = {
+    "fromLat": 49.2596302,
+    "fromLon": -123.1489612,
+    "toLat": 49.2536009,
+    "toLon": -123.0937825,
+    "shadeData": shadeData.shadeProfile
+  }
 
-
-
-
-
+  response = await fetch("http://localhost:8081/api/route", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(routeRequest)
+  })
+  if (!response.ok) {
+    throw new Error("Error generating a route");
+  }
+  let routeResponse = await response.json();
+  console.log(routeResponse);
+} catch (err) {
+  console.log(err);
+}
 
