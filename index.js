@@ -188,7 +188,14 @@ app.post('/api/shade', async (req, res) => {
               let count = edgeInfo.numSubEdges * numPoints * 4;
               let start = outputIdx
               outputIdx += count
-              accumulatedOutput[edgeInfo.edgeId] = outputArr.slice(start, outputIdx)
+              
+              let edgeOutput = [];
+              for (let k = 0; k < edgeInfo.numSubEdges; k++) {
+                let subEdgeStart = start + k * numPoints * 4;
+                let subEdgeEnd = subEdgeStart + numPoints * 4;
+                edgeOutput.push(outputArr.slice(subEdgeStart, subEdgeEnd));
+              }
+              accumulatedOutput[edgeInfo.edgeId] = edgeOutput;
             }
           }
           window.shadeProfileOutput = accumulatedOutput;
