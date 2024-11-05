@@ -31,6 +31,10 @@ public class ShadedGraphHopper extends GraphHopper {
     shadeManager.addEdgeShadeProfiles(data);
   }
 
+  public void clearShadeData() {
+    shadeManager.clearData();
+  }
+
 }
 
 
