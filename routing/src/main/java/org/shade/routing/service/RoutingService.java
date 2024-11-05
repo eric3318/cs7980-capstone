@@ -34,7 +34,9 @@ public class RoutingService {
     GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
         routeRequest.toLat(), routeRequest.toLon());
     ghRequest.setProfile("shaded");
-    return hopper.route(ghRequest);
+    GHResponse ghResponse = hopper.route(ghRequest);
+    ((ShadedGraphHopper) hopper).clearShadeData();
+    return ghResponse;
   }
 
   public List<BBoxDto> getEdges(double minLon, double maxLon, double minLat,
