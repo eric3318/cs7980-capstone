@@ -5,6 +5,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class ShadedWeighting extends AbstractAdjustedWeighting {
+
   private final ShadeDataManager shadeManager;
   private static final String name = "shaded";
 
@@ -15,8 +16,8 @@ public class ShadedWeighting extends AbstractAdjustedWeighting {
 
   @Override
   public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-    if (!shadeManager.withinRange(edgeState)){
-      return Double.MAX_VALUE;
+    if (!shadeManager.withinRange(edgeState)) {
+      return Double.POSITIVE_INFINITY;
     }
     double distanceWeight = superWeighting.calcEdgeWeight(edgeState, reverse);
     // use formula
