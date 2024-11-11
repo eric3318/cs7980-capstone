@@ -27,8 +27,8 @@ public class ShadedGraphHopper extends GraphHopper {
     graphStatus.setCleanedUp();
   }
 
-  public void attachShadeData(Map<Integer, List<List<Integer>>> data) {
-    shadeManager.addEdgeShadeProfiles(data);
+  public void attachShadeData(Map<Integer, List<List<Integer>>> samples, Map<Integer, List<Double>> segmentlengths) {
+    shadeManager.addEdgeShadeProfiles(samples,segmentlengths);
   }
 
   public void clearShadeData() {

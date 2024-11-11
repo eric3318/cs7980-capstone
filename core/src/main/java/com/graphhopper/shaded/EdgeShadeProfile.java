@@ -7,6 +7,10 @@ public class EdgeShadeProfile {
   private final List<Boolean> samplings = new ArrayList<>();
   private static final int[] SHADE_COLOR = new int[]{255,255,255,255};
 
+  @lombok.Getter
+  private double shadeCoverage;
+
+
   public void addPoints(List<Integer> rgbaList){
     int size = rgbaList.size();
     if (size < 1){
@@ -25,15 +29,17 @@ public class EdgeShadeProfile {
       }
       samplings.add(isShade);
     }
+    updateShadeCoverage();
   }
 
-  public double getShadeCoverage(){
+  private void updateShadeCoverage(){
     int shadeCount = 0;
     for (Boolean isShade: samplings){
       if (isShade){
         shadeCount ++;
       }
     }
-    return ((double) shadeCount /samplings.size()) * 100;
+    shadeCoverage = (double) shadeCount /samplings.size();
   }
+
 }
