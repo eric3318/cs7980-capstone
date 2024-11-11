@@ -1,10 +1,10 @@
 let response;
 
 let params = {
-  minLon: -122.98701,
-  maxLon: -122.96027,
-  minLat: 49.24033,
-  maxLat: 49.25313
+  minLon: -123.20701,
+  maxLon: -123.10027,
+  minLat: 49.23,
+  maxLat: 49.27
 }
 let queryString = "?"
 

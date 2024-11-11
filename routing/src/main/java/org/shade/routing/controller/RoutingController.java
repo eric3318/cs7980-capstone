@@ -31,4 +31,8 @@ public class RoutingController {
   public ResponseEntity<?> route(@RequestBody RouteRequest routeRequest) {
     return new ResponseEntity<>(routingService.getRoute(routeRequest), HttpStatus.OK);
   }
+//  @PostMapping("/route-dynamic")
+//  public ResponseEntity<?> route_dynamic(@RequestBody RouteRequest routeRequest) {
+//    return new ResponseEntity<>(routingService.getRouteDynamic(routeRequest), HttpStatus.OK);
+//  }
 }

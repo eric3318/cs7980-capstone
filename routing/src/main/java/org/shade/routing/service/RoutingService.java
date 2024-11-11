@@ -16,6 +16,8 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.shade.routing.dto.BBoxDto;
 import org.shade.routing.dto.BBoxLimits;
@@ -30,7 +32,17 @@ public class RoutingService {
   private final GraphHopper hopper;
 
   public GHResponse getRoute(RouteRequest routeRequest) {
-    ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
+    Map<Integer, List<List<Integer>>> samples = routeRequest.shadeData().entrySet().stream()
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            entry -> entry.getValue().shadeSamples()
+        ));
+    Map<Integer, List<Double>> segmentLengths = routeRequest.shadeData().entrySet().stream()
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            entry -> entry.getValue().segmentLengths()
+        ));
+    ((ShadedGraphHopper) hopper).attachShadeData(samples, segmentLengths);
     GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
         routeRequest.toLat(), routeRequest.toLon());
     ghRequest.setProfile("shaded");
