@@ -24,6 +24,7 @@ public class ShadedGraphHopper extends GraphHopper {
   @Override
   protected void cleanUp() {
     super.cleanUp();
+    graphStatus.setRouting(true);
   }
 
   public void attachShadeData(Map<Integer, List<List<Integer>>> samples, Map<Integer, List<Double>> segmentlengths) {
