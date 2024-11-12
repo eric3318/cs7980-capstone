@@ -12,7 +12,7 @@ public class ShadedGraphHopper extends GraphHopper {
 
   public ShadedGraphHopper() {
     this.shadeManager = new ShadeDataManager();
-    this.graphStatus = new GraphStatus();
+    this.graphStatus = GraphStatus.getInstance();
   }
 
   @Override
@@ -24,7 +24,6 @@ public class ShadedGraphHopper extends GraphHopper {
   @Override
   protected void cleanUp() {
     super.cleanUp();
-    graphStatus.setCleanedUp();
   }
 
   public void attachShadeData(Map<Integer, List<List<Integer>>> samples, Map<Integer, List<Double>> segmentlengths) {

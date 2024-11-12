@@ -12,13 +12,15 @@ public class ShadedWeighting extends AbstractAdjustedWeighting {
   public ShadedWeighting(Weighting superWeighting, ShadeDataManager shadeDataManager) {
     super(superWeighting);
     this.shadeManager = shadeDataManager;
-    this.graphStatus = new GraphStatus();
+    this.graphStatus = GraphStatus.getInstance();
   }
 
   @Override
   public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+    if (!graphStatus.getRouting())
+      return edgeState.getDistance();
     if (!shadeManager.withinRange(edgeState)) {
-      return Double.POSITIVE_INFINITY;
+      return edgeState.getDistance();
     }
     return getEdgeWeight(edgeState.getDistance(), shadeManager.getShadeCoverage(edgeState),0.5);
   }

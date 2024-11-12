@@ -2,13 +2,19 @@ package com.graphhopper.shaded;
 
 public class GraphStatus {
 
-  private static boolean cleanedUp = false;
+  private boolean routing = false;
+  private static GraphStatus instance;
+  private GraphStatus(){}
 
-  public boolean getCleanedUp() {
-    return cleanedUp;
+  public static GraphStatus getInstance() {
+    if (instance == null)
+      instance = new GraphStatus();
+    return instance;
   }
-
-  public void setCleanedUp() {
-    cleanedUp = true;
+  public boolean getRouting() {
+    return routing;
+  }
+  public void setRouting(boolean routing) {
+    this.routing = routing;
   }
 }
