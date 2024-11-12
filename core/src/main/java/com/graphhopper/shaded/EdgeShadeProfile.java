@@ -2,12 +2,13 @@ package com.graphhopper.shaded;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 
 public class EdgeShadeProfile {
   private final List<Boolean> samplings = new ArrayList<>();
   private static final int[] SHADE_COLOR = new int[]{255,255,255,255};
 
-  @lombok.Getter
+  @Getter
   private double shadeCoverage;
 
 

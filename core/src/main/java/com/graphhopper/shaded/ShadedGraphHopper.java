@@ -2,6 +2,7 @@ package com.graphhopper.shaded;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.WeightingFactory;
+import com.graphhopper.routing.weighting.Weighting;
 import java.util.List;
 import java.util.Map;
 
@@ -27,12 +28,17 @@ public class ShadedGraphHopper extends GraphHopper {
     graphStatus.setRouting(true);
   }
 
-  public void attachShadeData(Map<Integer, List<List<Integer>>> samples, Map<Integer, List<Double>> segmentlengths) {
-    shadeManager.addEdgeShadeProfiles(samples,segmentlengths);
+  public void attachShadeData(Map<Integer, List<List<Integer>>> samples,
+      Map<Integer, List<Double>> segmentLengths) {
+    shadeManager.addEdgeShadeProfiles(samples, segmentLengths);
   }
 
   public void clearShadeData() {
     shadeManager.clearData();
+  }
+
+  public void setShadePref(double shadePref) {
+    ShadedWeighting.setShadePref(shadePref);
   }
 
 }
