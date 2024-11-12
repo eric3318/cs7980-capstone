@@ -10,14 +10,13 @@ function App() {
     const defaultTime = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
     const pacificDate = new Date(defaultTime);
 
-    // 格式化为 `yyyy-MM-ddTHH:mm`
     const pacificISOString = new Date(pacificDate.getTime() - pacificDate.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
+        .toISOString()
+        .slice(0, 16);
     const defaultPreference = 0.5;
-    const defaultSpeed = 2.5; // Speed in m/s
+    const defaultSpeed = 2.5;
 
-    const [initialCenter, setInitialCenter] = useState(defaultCityCoordinates); // 初始地图中心
+    const [initialCenter, setInitialCenter] = useState(defaultCityCoordinates);
     const [city, setCity] = useState('vancouver');
     const [time, setTime] = useState(pacificISOString);
     const [preference, setPreference] = useState(defaultPreference);
@@ -25,8 +24,8 @@ function App() {
     const [startPoint, setStartPoint] = useState(null);
     const [endPoint, setEndPoint] = useState(null);
     const [endTime, setEndTime] = useState(null);
+    const [routeCoordinates, setRouteCoordinates] = useState([]); // 存储路线坐标
 
-    // 当用户切换城市时设置新的初始中心，但不触发重新渲染
     const handleCityChange = (newCity) => {
         setCity(newCity);
         if (newCity === 'vancouver') {
@@ -36,46 +35,126 @@ function App() {
         }
     };
 
-    // 生成路线
-    const handleGenerateRoute = () => {
-        if (startPoint && endPoint) {
-            fetch('/api/generateRoute', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    city,
-                    time,
-                    preference,
-                    speed,
-                    startPoint,
-                    endPoint,
-                }),
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    const distance = data.distance;
-                    const travelTimeSeconds = distance / speed;
-                    const startTime = new Date(time);
-                    const calculatedEndTime = new Date(startTime.getTime() + travelTimeSeconds * 1000);
+    // 获取edges数据
+    const fetchEdges = async (params) => {
+        let queryString = "?";
+        for (let key in params) {
+            let val = params[key];
+            queryString += `${key}=${val}&`;
+        }
 
-                    // 将结束时间格式化为太平洋时间
-                    const pacificEndTime = calculatedEndTime.toLocaleString('en-US', {
-                        timeZone: 'America/Los_Angeles',
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                    setEndTime(pacificEndTime);
-                })
-                .catch((error) => console.error('Error generating route:', error));
-        } else {
+        const response = await fetch(`http://localhost:8081/api/edges${queryString}`);
+        if (!response.ok) throw new Error("Error fetching edges");
+        return await response.json();
+    };
+
+    // 获取阴影数据
+    const fetchShadowData = async (edgesData) => {
+        const response = await fetch(`http://localhost:3000/api/shade`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ bBoxes: edgesData })
+        });
+        if (!response.ok) throw new Error("Error fetching shadow data");
+        return await response.json();
+    };
+
+    // 计算路径
+    const calculateRoute = async (shadeProfile) => {
+        const routeRequest = {
+            fromLat: startPoint.lat,
+            fromLon: startPoint.lng,
+            toLat: endPoint.lat,
+            toLon: endPoint.lng,
+            shadeData: shadeProfile
+        };
+
+        const response = await fetch("http://localhost:8081/api/route", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(routeRequest)
+        });
+        if (!response.ok) throw new Error("Error generating route");
+        return await response.json();
+    };
+
+    // 生成路径
+    const handleGenerateRoute = async () => {
+        if (!startPoint || !endPoint) {
             alert('Please select both a starting point and an endpoint');
+            return;
+        }
+        // 临时代码用于测试，后端搭建好后删除
+        let route_example =  [
+            [
+              -123.137296,
+              49.285725
+            ],
+            [
+              -123.137614,
+              49.285931
+            ],
+            [
+              -123.138674,
+              49.285222
+            ],
+            [
+              -123.134938,
+              49.282805
+            ],
+            [
+              -123.128632,
+              49.278729
+            ],
+            [
+              -123.128948,
+              49.278523
+            ]
+          ];
+          setRouteCoordinates(route_example);
+
+        try {
+            // Step 1: 获取边缘数据
+            const edgesParams = {
+                minLon: Math.min(startPoint.lng, endPoint.lng),
+                maxLon: Math.max(startPoint.lng, endPoint.lng),
+                minLat: Math.min(startPoint.lat, endPoint.lat),
+                maxLat: Math.max(startPoint.lat, endPoint.lat)
+            };
+            const edgesData = await fetchEdges(edgesParams);
+
+            // Step 2: 获取阴影数据
+            const shadeData = await fetchShadowData(edgesData);
+
+            // Step 3: 计算路径
+            const routeResponse = await calculateRoute(shadeData.shadeProfile);
+            // 假设返回数据中包含路线坐标
+            const route = routeResponse.best.instructions; // 使用返回的坐标数组作为路线
+            setRouteCoordinates(route); // 更新路线坐标
+
+            const distance = routeResponse.best.distance;
+            const travelTimeSeconds = distance / speed;
+            const startTime = new Date(time);
+            const calculatedEndTime = new Date(startTime.getTime() + travelTimeSeconds * 1000);
+
+            const pacificEndTime = calculatedEndTime.toLocaleString('en-US', {
+                timeZone: 'America/Los_Angeles',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            setEndTime(pacificEndTime);
+        } catch (error) {
+            console.error("Error generating route:", error);
         }
     };
 
-    // 刷新表单和标记，但不改变地图中心
     const handleRefresh = () => {
         setTime(pacificISOString);
         setPreference(defaultPreference);
@@ -83,25 +162,24 @@ function App() {
         setStartPoint(null);
         setEndPoint(null);
         setEndTime(null);
+        setRouteCoordinates([]); // 清空路线
     };
 
     return (
         <div>
-            <h1>Pathfinding App</h1>
-            
-            {/* 城市选择 */}
+            <h1>Shadiest Path Finder</h1>
+
             <CitySelect city={city} setCity={handleCityChange} />
 
-            {/* 地图（仅在加载时设置初始中心） */}
             <MapComponent
                 initialCenter={initialCenter}
                 startPoint={startPoint}
                 endPoint={endPoint}
                 setStartPoint={setStartPoint}
                 setEndPoint={setEndPoint}
+                routeCoordinates={routeCoordinates} // 传递路线坐标
             />
-            
-            {/* 路线参数 */}
+
             <TimeSelect time={time} setTime={setTime} />
             <PreferenceSlider preference={preference} setPreference={setPreference} />
             {/*<SpeedControl speed={speed} setSpeed={setSpeed} />*/}
@@ -109,7 +187,6 @@ function App() {
             <button onClick={handleGenerateRoute}>Generate Route</button>
             <button onClick={handleRefresh}>Refresh</button>
 
-            {/* 显示并允许编辑标记的经纬度 */}
             <div>
                 {startPoint && (
                     <div>
