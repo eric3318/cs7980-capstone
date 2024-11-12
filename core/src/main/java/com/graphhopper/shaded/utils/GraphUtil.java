@@ -2,7 +2,9 @@ package com.graphhopper.shaded.utils;
 
 import com.graphhopper.util.shapes.BBox;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GraphUtil {
 
@@ -19,6 +21,14 @@ public class GraphUtil {
     double latRad = Math.toRadians(lat);
     double mercatorY = Math.log(Math.tan(latRad) + 1.0 / Math.cos(latRad));
     return ((1.0 - (mercatorY / Math.PI)) / 2.0 * Math.pow(2.0, BUILDING_ZOOM)) * TILE_SIZE;
+  }
+
+  public static double[] getBBox(double fromLat, double fromLon, double toLat, double toLon) {
+    double minLat = Math.min(fromLat, toLat);
+    double maxLat = Math.max(fromLat, toLat);
+    double minLon = Math.min(fromLon, toLon);
+    double maxLon = Math.max(fromLon, toLon);
+    return new double[]{minLon, maxLon, minLat, maxLat};
   }
 
   public static List<BBox> getBBoxCells(double minLon, double maxLon, double minLat,
