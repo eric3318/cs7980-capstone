@@ -27,10 +27,8 @@ public class ShadedWeighting extends AbstractAdjustedWeighting {
       return superWeighting.calcEdgeWeight(edgeState, reverse);
     }
     if (!shadeManager.withinRange(edgeState)) {
-      return Double.POSITIVE_INFINITY;
-/*
-      return edgeState.getDistance();
-*/
+      // this may need to be changed to positive infinity to exclude edges out of range from routes
+      return superWeighting.calcEdgeWeight(edgeState, reverse);
     }
     return getEdgeWeight(superWeighting.calcEdgeWeight(edgeState, reverse),
         shadeManager.getShadeCoverage(edgeState));
