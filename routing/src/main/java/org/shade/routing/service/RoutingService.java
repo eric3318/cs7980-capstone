@@ -43,11 +43,16 @@ public class RoutingService {
             Map.Entry::getKey,
             entry -> entry.getValue().segmentLengths()
         ));
+
     ((ShadedGraphHopper) hopper).attachShadeData(samples, segmentLengths);
-    GraphStatus.getInstance().setRouting(true);
+    ((ShadedGraphHopper) hopper).setShadePref(routeRequest.shadePref());
+
+//    GraphStatus.getInstance().setRouting(true);
+
     GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
         routeRequest.toLat(), routeRequest.toLon());
     ghRequest.setProfile("shaded");
+
     GHResponse ghResponse = hopper.route(ghRequest);
     ((ShadedGraphHopper) hopper).clearShadeData();
     return ghResponse;
