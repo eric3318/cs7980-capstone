@@ -21,9 +21,9 @@ public class RoutingController {
   private final RoutingService routingService;
 
   @GetMapping("/edges")
-  public ResponseEntity<?> getEdges(@RequestParam double minLon, @RequestParam double maxLon,
-      @RequestParam double minLat, @RequestParam double maxLat) {
-    return new ResponseEntity<>(routingService.getEdges(minLon, maxLon, minLat, maxLat),
+  public ResponseEntity<?> getEdges(@RequestParam double fromLat, @RequestParam double fromLon,
+      @RequestParam double toLat, @RequestParam double toLon) {
+    return new ResponseEntity<>(routingService.getEdges(fromLat, fromLon, toLat, toLon),
         HttpStatus.OK);
   }
 
@@ -31,6 +31,7 @@ public class RoutingController {
   public ResponseEntity<?> route(@RequestBody RouteRequest routeRequest) {
     return new ResponseEntity<>(routingService.getRoute(routeRequest), HttpStatus.OK);
   }
+
 //  @PostMapping("/route-dynamic")
 //  public ResponseEntity<?> route_dynamic(@RequestBody RouteRequest routeRequest) {
 //    return new ResponseEntity<>(routingService.getRouteDynamic(routeRequest), HttpStatus.OK);

@@ -58,10 +58,11 @@ public class RoutingService {
     return ghResponse;
   }
 
-  public List<BBoxDto> getEdges(double minLon, double maxLon, double minLat,
-      double maxLat) {
+  public List<BBoxDto> getEdges(double fromLat, double fromLon, double toLat, double toLon) {
     LocationIndex locationIndex = hopper.getLocationIndex();
-    List<BBox> bBoxCells = GraphUtil.getBBoxCells(minLon, maxLon, minLat, maxLat);
+    double[] bounds = GraphUtil.getBBox(fromLat, fromLon, toLat, toLon);
+    List<BBox> bBoxCells = GraphUtil.getBBoxCells(bounds[0], bounds[1], bounds[2],
+        bounds[3]);
     Graph graph = hopper.getBaseGraph();
     List<BBoxDto> result = new ArrayList<>();
     List<Edge> cell = new ArrayList<>();

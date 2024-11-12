@@ -12,8 +12,8 @@ public class GraphHopperConfig {
   @Bean
   public GraphHopper graphHopper() {
     GraphHopper hopper = new ShadedGraphHopper();
-    hopper.setOSMFile("routing/src/main/resources/static/british-columbia-latest.osm.pbf");
-    hopper.setGraphHopperLocation("routing/target/graph-cache");
+    hopper.setOSMFile("src/main/resources/static/british-columbia-latest.osm.pbf");
+    hopper.setGraphHopperLocation("target/graph-cache");
     hopper.setEncodedValuesString("car_access, car_average_speed");
     hopper.setProfiles(
         new Profile("shaded"));
