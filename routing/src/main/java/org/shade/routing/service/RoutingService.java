@@ -4,6 +4,7 @@ package org.shade.routing.service;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.shaded.GraphStatus;
 import com.graphhopper.shaded.ShadedGraphHopper;
 import com.graphhopper.shaded.utils.GraphUtil;
 import com.graphhopper.storage.Graph;
@@ -43,6 +44,7 @@ public class RoutingService {
             entry -> entry.getValue().segmentLengths()
         ));
     ((ShadedGraphHopper) hopper).attachShadeData(samples, segmentLengths);
+    GraphStatus.getInstance().setRouting(true);
     GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
         routeRequest.toLat(), routeRequest.toLon());
     ghRequest.setProfile("shaded");
