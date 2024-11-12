@@ -4,6 +4,7 @@ package org.shade.routing.service;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.shaded.GraphStatus;
 import com.graphhopper.shaded.ShadedGraphHopper;
 import com.graphhopper.shaded.utils.GraphUtil;
 import com.graphhopper.storage.Graph;
@@ -16,6 +17,8 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.shade.routing.dto.BBoxDto;
 import org.shade.routing.dto.BBoxLimits;
@@ -30,19 +33,36 @@ public class RoutingService {
   private final GraphHopper hopper;
 
   public GHResponse getRoute(RouteRequest routeRequest) {
-    ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
+    Map<Integer, List<List<Integer>>> samples = routeRequest.shadeData().entrySet().stream()
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            entry -> entry.getValue().shadeSamples()
+        ));
+    Map<Integer, List<Double>> segmentLengths = routeRequest.shadeData().entrySet().stream()
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            entry -> entry.getValue().segmentLengths()
+        ));
+
+    ((ShadedGraphHopper) hopper).attachShadeData(samples, segmentLengths);
+    ((ShadedGraphHopper) hopper).setShadePref(routeRequest.shadePref());
+
+//    GraphStatus.getInstance().setRouting(true);
+
     GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
         routeRequest.toLat(), routeRequest.toLon());
     ghRequest.setProfile("shaded");
+
     GHResponse ghResponse = hopper.route(ghRequest);
     ((ShadedGraphHopper) hopper).clearShadeData();
     return ghResponse;
   }
 
-  public List<BBoxDto> getEdges(double minLon, double maxLon, double minLat,
-      double maxLat) {
+  public List<BBoxDto> getEdges(double fromLat, double fromLon, double toLat, double toLon) {
     LocationIndex locationIndex = hopper.getLocationIndex();
-    List<BBox> bBoxCells = GraphUtil.getBBoxCells(minLon, maxLon, minLat, maxLat);
+    double[] bounds = GraphUtil.getBBox(fromLat, fromLon, toLat, toLon);
+    List<BBox> bBoxCells = GraphUtil.getBBoxCells(bounds[0], bounds[1], bounds[2],
+        bounds[3]);
     Graph graph = hopper.getBaseGraph();
     List<BBoxDto> result = new ArrayList<>();
     List<Edge> cell = new ArrayList<>();

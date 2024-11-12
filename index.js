@@ -4,8 +4,8 @@ import puppeteer from 'puppeteer';
 const app = express();
 const port = 3000;
 
-app.use(express.json({limit: '10mb'}));
-app.use(express.urlencoded({limit: '10mb', extended: true}));
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb', extended: true}));
 
 let browser;
 
@@ -15,7 +15,8 @@ async function initializeBrowser() {
         {
           headless: true,
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
-          defaultViewport: {height: 300, width: 300}
+          defaultViewport: {height: 300, width: 300},
+          devtools: false,
         });
   }
   return browser;
@@ -28,7 +29,7 @@ app.post('/api/shade', async (req, res) => {
   try {
     const browser = await initializeBrowser();
     const page = await browser.newPage();
-
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
     await page.setContent(`
     <!DOCTYPE html>
     <html lang="en">
@@ -57,19 +58,17 @@ app.post('/api/shade', async (req, res) => {
     <script>
       document.addEventListener('DOMContentLoaded', async () => {
         const BUILDING_ZOOM = 15;
-    
+        console.log('Debug message from inside the page');
         const numPoints = 10;
         const boundingBoxes = ${JSON.stringify(bBoxes)}
-        
         const groups = []
         const groupMetaDataArr = []
-        
         for (let i = 0; i < boundingBoxes.length ; i++) {
           let edges = boundingBoxes[i].edges
           const group = []
           const groupMetaData = []
           edges.forEach(edge => {
-            const edgeInfo = {edgeId:edge.edgeId, numSubEdges: 0}
+            const edgeInfo = {edgeId:edge.edgeId, numSubEdges: 0, segmentLengths:[]}
             const points = edge.points
             const currEdge = []
             let prev = points.slice(0, 2)
@@ -86,6 +85,7 @@ app.post('/api/shade', async (req, res) => {
               }
               currEdge.push(subEdgePoints)
               edgeInfo.numSubEdges += 1
+              edgeInfo.segmentLengths.push(length)
               prev = curr
               idx += 2;
             }
@@ -194,8 +194,11 @@ app.post('/api/shade', async (req, res) => {
                 let subEdgeStart = start + k * numPoints * 4;
                 let subEdgeEnd = subEdgeStart + numPoints * 4;
                 edgeOutput.push(outputArr.slice(subEdgeStart, subEdgeEnd));
+                
               }
-              accumulatedOutput[edgeInfo.edgeId] = edgeOutput;
+              accumulatedOutput[edgeInfo.edgeId] = {}
+              accumulatedOutput[edgeInfo.edgeId].shadeSamples = edgeOutput;
+              accumulatedOutput[edgeInfo.edgeId].segmentLengths = edgeInfo.segmentLengths;
             }
           }
           window.shadeProfileOutput = accumulatedOutput;
@@ -229,7 +232,7 @@ app.post('/api/shade', async (req, res) => {
 app.listen(port, async () => {
   await initializeBrowser();
   console.log(
-      `ShadeMap API running at http://localhost:${port}/api/shade`);
+      `ShadeMap service running at http://localhost:${port}/api/shade`);
 });
 
 process.on('SIGINT', async () => {
