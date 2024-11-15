@@ -4,26 +4,32 @@ package org.shade.routing.service;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.ResponsePath;
+import com.graphhopper.shaded.Edge;
+import com.graphhopper.shaded.EdgeCache;
 import com.graphhopper.shaded.GraphStatus;
 import com.graphhopper.shaded.ShadedGraphHopper;
 import com.graphhopper.shaded.utils.GraphUtil;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndex.Visitor;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.shade.routing.dto.BBoxDto;
 import org.shade.routing.dto.BBoxLimits;
-import org.shade.routing.dto.Edge;
 import org.shade.routing.dto.RouteRequest;
+import org.shade.routing.dto.ShadeProfile;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,30 +38,23 @@ public class RoutingService {
 
   private final GraphHopper hopper;
 
-  public GHResponse getRoute(RouteRequest routeRequest) {
-    Map<Integer, List<List<Integer>>> samples = routeRequest.shadeData().entrySet().stream()
-        .collect(Collectors.toMap(
-            Map.Entry::getKey,
-            entry -> entry.getValue().shadeSamples()
-        ));
-    Map<Integer, List<Double>> segmentLengths = routeRequest.shadeData().entrySet().stream()
-        .collect(Collectors.toMap(
-            Map.Entry::getKey,
-            entry -> entry.getValue().segmentLengths()
-        ));
+  public List<Double[]> getRoute(RouteRequest routeRequest) {
 
-    ((ShadedGraphHopper) hopper).attachShadeData(samples, segmentLengths);
+    ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
     ((ShadedGraphHopper) hopper).setShadePref(routeRequest.shadePref());
 
-//    GraphStatus.getInstance().setRouting(true);
-
-    GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
-        routeRequest.toLat(), routeRequest.toLon());
-    ghRequest.setProfile("shaded");
-
-    GHResponse ghResponse = hopper.route(ghRequest);
-    ((ShadedGraphHopper) hopper).clearShadeData();
-    return ghResponse;
+//    GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
+//        routeRequest.toLat(), routeRequest.toLon());
+//    ghRequest.setProfile("shaded");
+//
+//    GHResponse ghResponse = hopper.route(ghRequest);
+//    ((ShadedGraphHopper) hopper).clearShadeData();
+//    PointList p = ghResponse.getBest().getPoints();
+//    List<Double[]> res = new ArrayList<>();
+//    for (GHPoint g : p){
+//      res.add(g.toGeoJson());
+//    }
+    return new ArrayList<>();
   }
 
   public List<BBoxDto> getEdges(double fromLat, double fromLon, double toLat, double toLon) {
@@ -64,21 +63,34 @@ public class RoutingService {
     List<BBox> bBoxCells = GraphUtil.getBBoxCells(bounds[0], bounds[1], bounds[2],
         bounds[3]);
     Graph graph = hopper.getBaseGraph();
+    EdgeCache edgeCache = ((ShadedGraphHopper) hopper).getEdgeCache();
     List<BBoxDto> result = new ArrayList<>();
     List<Edge> cell = new ArrayList<>();
+    DistanceCalc calc = new DistanceCalcEarth();
 
     Visitor v = i -> {
       EdgeIteratorState edgeState = graph.getEdgeIteratorState(i, Integer.MIN_VALUE);
       PointList geometry = edgeState.fetchWayGeometry(FetchMode.ALL);
       List<Double> points = new ArrayList<>();
+      List<Double> segmentLengths = new ArrayList<>();
 
       for (int idx = 0; idx < geometry.size(); idx++) {
         GHPoint ghPoint = geometry.get(idx);
         points.add(ghPoint.getLon());
         points.add(ghPoint.getLat());
+        if (idx > 0) {
+          GHPoint prevPoint = geometry.get(idx - 1);
+          double segmentLength = calc.calcDist(
+              prevPoint.getLat(), prevPoint.getLon(),
+              ghPoint.getLat(), ghPoint.getLon()
+          );
+          segmentLengths.add(segmentLength);
+        }
       }
 
-      Edge edge = new Edge(edgeState.getEdge(), points);
+      int edgeId = edgeState.getEdge();
+      Edge edge = new Edge(edgeId, segmentLengths, points);
+      edgeCache.put(edgeId, edge);
       cell.add(edge);
     };
 
@@ -87,6 +99,7 @@ public class RoutingService {
       BBoxLimits bBoxLimits = new BBoxLimits(bBox.minLon, bBox.maxLon, bBox.minLat, bBox.maxLat);
       BBoxDto bBoxDto = new BBoxDto(bBoxLimits, List.copyOf(cell));
       result.add(bBoxDto);
+
       cell.clear();
     }
     return result;

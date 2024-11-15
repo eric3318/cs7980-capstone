@@ -5,6 +5,6 @@ import java.util.Map;
 
 public record RouteRequest(double fromLat, double fromLon, double toLat, double toLon,
                            double shadePref,
-                           Map<Integer, ShadeProfile> shadeData) {
+                           Map<Integer, List<List<Integer>>> shadeData) {
 
 }
