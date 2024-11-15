@@ -43,18 +43,19 @@ public class RoutingService {
     ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
     ((ShadedGraphHopper) hopper).setShadePref(routeRequest.shadePref());
 
-//    GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
-//        routeRequest.toLat(), routeRequest.toLon());
-//    ghRequest.setProfile("shaded");
-//
-//    GHResponse ghResponse = hopper.route(ghRequest);
-//    ((ShadedGraphHopper) hopper).clearShadeData();
-//    PointList p = ghResponse.getBest().getPoints();
-//    List<Double[]> res = new ArrayList<>();
-//    for (GHPoint g : p){
-//      res.add(g.toGeoJson());
-//    }
-    return new ArrayList<>();
+    GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
+        routeRequest.toLat(), routeRequest.toLon());
+    ghRequest.setProfile("shaded");
+
+    GHResponse ghResponse = hopper.route(ghRequest);
+    ((ShadedGraphHopper) hopper).clearShadeData();
+
+    PointList p = ghResponse.getBest().getPoints();
+    List<Double[]> path = new ArrayList<>();
+    for (GHPoint g : p) {
+      path.add(g.toGeoJson());
+    }
+    return path;
   }
 
   public List<BBoxDto> getEdges(double fromLat, double fromLon, double toLat, double toLon) {
@@ -70,6 +71,13 @@ public class RoutingService {
 
     Visitor v = i -> {
       EdgeIteratorState edgeState = graph.getEdgeIteratorState(i, Integer.MIN_VALUE);
+      int edgeId = edgeState.getEdge();
+
+      if (edgeCache.contains(edgeId)) {
+        cell.add(edgeCache.get(edgeId));
+        return;
+      }
+
       PointList geometry = edgeState.fetchWayGeometry(FetchMode.ALL);
       List<Double> points = new ArrayList<>();
       List<Double> segmentLengths = new ArrayList<>();
@@ -88,7 +96,6 @@ public class RoutingService {
         }
       }
 
-      int edgeId = edgeState.getEdge();
       Edge edge = new Edge(edgeId, segmentLengths, points);
       edgeCache.put(edgeId, edge);
       cell.add(edge);
