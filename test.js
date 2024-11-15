@@ -1,10 +1,10 @@
 let response;
 
 let params = {
-  minLon: -123.20701,
-  maxLon: -123.10027,
-  minLat: 49.23,
-  maxLat: 49.27
+  "fromLat": 49.23636,
+  "fromLon": -123.00546,
+  "toLat": 49.22353,
+  "toLon": -122.97177,
 }
 let queryString = "?"
 
@@ -28,16 +28,18 @@ try {
     body: JSON.stringify({bBoxes: edgesData})
   });
   if (!response.ok) {
-    throw new Error("Error fetching graph edges from routing service");
+    throw new Error("Error fetching shade data");
   }
   let shadeData = await response.json();
+  console.log(Object.keys(shadeData.shadeProfile).length);
 
   let routeRequest = {
-    "fromLat": 49.2596302,
-    "fromLon": -123.1489612,
-    "toLat": 49.2536009,
-    "toLon": -123.0937825,
-    "shadeData": shadeData.shadeProfile
+    "fromLat": 49.23185,
+    "fromLon": -122.99422,
+    "toLat": 49.22963,
+    "toLon": -122.98647,
+    "shadeData": shadeData.shadeProfile,
+    shadePref: 0.3,
   }
 
   response = await fetch("http://localhost:8081/api/route", {
