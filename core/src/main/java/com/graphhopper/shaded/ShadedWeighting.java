@@ -23,15 +23,15 @@ public class ShadedWeighting extends AbstractAdjustedWeighting {
 
   @Override
   public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-    if (!graphStatus.getRouting()) {
-      return superWeighting.calcEdgeWeight(edgeState, reverse);
-    }
-    if (!shadeManager.withinRange(edgeState)) {
+    if (graphStatus.getRouting()) {
+      if (shadeManager.withinRange(edgeState)) {
+        return getEdgeWeight(superWeighting.calcEdgeWeight(edgeState, reverse),
+            shadeManager.getShadeCoverage(edgeState));
+      }
       // this may need to be changed to positive infinity to exclude edges out of range from routes
       return superWeighting.calcEdgeWeight(edgeState, reverse);
     }
-    return getEdgeWeight(superWeighting.calcEdgeWeight(edgeState, reverse),
-        shadeManager.getShadeCoverage(edgeState));
+    return superWeighting.calcEdgeWeight(edgeState, reverse);
   }
 
   private double getEdgeWeight(double distanceWeight, double coverage) {

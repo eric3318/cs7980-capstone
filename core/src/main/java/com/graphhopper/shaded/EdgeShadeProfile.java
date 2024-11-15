@@ -3,44 +3,61 @@ package com.graphhopper.shaded;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class EdgeShadeProfile {
-  private final List<Boolean> samplings = new ArrayList<>();
-  private static final int[] SHADE_COLOR = new int[]{255,255,255,255};
+
+  private final List<List<Boolean>> subEdges = new ArrayList<>();
+  private static final int SHADE_COLOR_START = 0;
+  private final List<Double> subEdgeLengths;
 
   @Getter
   private double shadeCoverage;
 
-
-  public void addPoints(List<Integer> rgbaList){
-    int size = rgbaList.size();
-    if (size < 1){
-      throw new RuntimeException("No points added for the edge");
+  public void process(List<List<Integer>> subEdgeRgbaLists) {
+    for (List<Integer> rgbaList : subEdgeRgbaLists) {
+      addSubEdge(rgbaList);
     }
-    int i = 0;
-    while (i < size){
-      int start = i;
-      i += 4;
-      boolean isShade = true;
-      for (int j = 0; start + j < i; j++){
-        if (rgbaList.get(start + j) != SHADE_COLOR[j]){
-          isShade = false;
-          break;
-        }
-      }
-      samplings.add(isShade);
-    }
-    updateShadeCoverage();
+    calcShadeCoverage();
   }
 
-  private void updateShadeCoverage(){
+
+  private void addSubEdge(List<Integer> rgbaList) {
+    int size = rgbaList.size();
+    int i = 0;
+    List<Boolean> subEdgeSamplings = new ArrayList<>();
+    while (i < size) {
+      subEdgeSamplings.add(rgbaList.get(i) == SHADE_COLOR_START);
+      i += 4;
+    }
+    subEdges.add(subEdgeSamplings);
+  }
+
+  private void calcShadeCoverage() {
+    double shadedDistance = 0;
+    double totalDistance = 0;
+    for (int i = 0; i < subEdges.size(); i++) {
+      double length = subEdgeLengths.get(i);
+      shadedDistance += calcSubEdgeShadeCoverage(i) * length;
+      totalDistance += length;
+    }
+    if (Math.abs(totalDistance) > 0.00002) {
+      shadeCoverage = shadedDistance / totalDistance;
+    } else {
+      shadeCoverage = 1.;
+    }
+  }
+
+  private double calcSubEdgeShadeCoverage(int index) {
+    List<Boolean> samplings = subEdges.get(index);
     int shadeCount = 0;
-    for (Boolean isShade: samplings){
-      if (isShade){
-        shadeCount ++;
+    for (Boolean isShade : samplings) {
+      if (isShade) {
+        shadeCount++;
       }
     }
-    shadeCoverage = (double) shadeCount /samplings.size();
+    return (double) shadeCount / samplings.size();
   }
 
 }
