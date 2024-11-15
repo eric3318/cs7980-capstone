@@ -22,14 +22,12 @@ async function initializeBrowser() {
   return browser;
 }
 
-app.use(express.json());
-
 app.post('/api/shade', async (req, res) => {
   const {bBoxes} = req.body;
   try {
     const browser = await initializeBrowser();
     const page = await browser.newPage();
-    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+
     await page.setContent(`
     <!DOCTYPE html>
     <html lang="en">
@@ -58,17 +56,19 @@ app.post('/api/shade', async (req, res) => {
     <script>
       document.addEventListener('DOMContentLoaded', async () => {
         const BUILDING_ZOOM = 15;
-        console.log('Debug message from inside the page');
+    
         const numPoints = 10;
         const boundingBoxes = ${JSON.stringify(bBoxes)}
+        
         const groups = []
         const groupMetaDataArr = []
+        
         for (let i = 0; i < boundingBoxes.length ; i++) {
           let edges = boundingBoxes[i].edges
           const group = []
           const groupMetaData = []
           edges.forEach(edge => {
-            const edgeInfo = {edgeId:edge.edgeId, numSubEdges: 0, segmentLengths:[]}
+            const edgeInfo = {edgeId:edge.edgeId, numSubEdges: 0}
             const points = edge.points
             const currEdge = []
             let prev = points.slice(0, 2)
@@ -85,7 +85,6 @@ app.post('/api/shade', async (req, res) => {
               }
               currEdge.push(subEdgePoints)
               edgeInfo.numSubEdges += 1
-              edgeInfo.segmentLengths.push(length)
               prev = curr
               idx += 2;
             }
@@ -194,11 +193,8 @@ app.post('/api/shade', async (req, res) => {
                 let subEdgeStart = start + k * numPoints * 4;
                 let subEdgeEnd = subEdgeStart + numPoints * 4;
                 edgeOutput.push(outputArr.slice(subEdgeStart, subEdgeEnd));
-                
               }
-              accumulatedOutput[edgeInfo.edgeId] = {}
-              accumulatedOutput[edgeInfo.edgeId].shadeSamples = edgeOutput;
-              accumulatedOutput[edgeInfo.edgeId].segmentLengths = edgeInfo.segmentLengths;
+              accumulatedOutput[edgeInfo.edgeId] = edgeOutput;
             }
           }
           window.shadeProfileOutput = accumulatedOutput;
