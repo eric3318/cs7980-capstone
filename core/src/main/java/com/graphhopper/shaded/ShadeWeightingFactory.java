@@ -6,7 +6,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.PMap;
-import lombok.Getter;
 
 public class ShadeWeightingFactory extends DefaultWeightingFactory {
 

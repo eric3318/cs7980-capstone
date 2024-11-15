@@ -3,7 +3,6 @@ package com.graphhopper.shaded;
 import com.graphhopper.routing.weighting.AbstractAdjustedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
-import lombok.Getter;
 import lombok.Setter;
 
 public class ShadedWeighting extends AbstractAdjustedWeighting {
