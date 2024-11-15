@@ -37,13 +37,12 @@ function App() {
 
     // 获取edges数据
     const fetchEdges = async (params) => {
-        let queryString = "?";
-        for (let key in params) {
-            let val = params[key];
-            queryString += `${key}=${val}&`;
-        }
-
-        const response = await fetch(`http://localhost:8081/api/edges${queryString}`);
+         
+        const queryString = Object.keys(params)
+        .map(key => `${key}=${params[key]}`)
+        .join("&");
+        const response = await fetch(`/api/edges?${queryString}`);
+    
         if (!response.ok) throw new Error("Error fetching edges");
         return await response.json();
     };
@@ -71,7 +70,7 @@ function App() {
             shadeData: shadeProfile
         };
 
-        const response = await fetch("http://localhost:8081/api/route", {
+        const response = await fetch("/api/route", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -88,42 +87,14 @@ function App() {
             alert('Please select both a starting point and an endpoint');
             return;
         }
-        // 临时代码用于测试，后端搭建好后删除
-        let route_example =  [
-            [
-              -123.137296,
-              49.285725
-            ],
-            [
-              -123.137614,
-              49.285931
-            ],
-            [
-              -123.138674,
-              49.285222
-            ],
-            [
-              -123.134938,
-              49.282805
-            ],
-            [
-              -123.128632,
-              49.278729
-            ],
-            [
-              -123.128948,
-              49.278523
-            ]
-          ];
-          setRouteCoordinates(route_example);
 
         try {
             // Step 1: 获取边缘数据
             const edgesParams = {
-                minLon: Math.min(startPoint.lng, endPoint.lng),
-                maxLon: Math.max(startPoint.lng, endPoint.lng),
-                minLat: Math.min(startPoint.lat, endPoint.lat),
-                maxLat: Math.max(startPoint.lat, endPoint.lat)
+                fromLat: startPoint.lat,
+                fromLon: startPoint.lng,
+                toLat: endPoint.lat,
+                toLon: endPoint.lng,
             };
             const edgesData = await fetchEdges(edgesParams);
 
@@ -132,8 +103,11 @@ function App() {
 
             // Step 3: 计算路径
             const routeResponse = await calculateRoute(shadeData.shadeProfile);
+            console.log(routeResponse);
+            const jsonData = JSON.stringify(routeResponse, null, 2);
+
             // 假设返回数据中包含路线坐标
-            const route = routeResponse.best.instructions; // 使用返回的坐标数组作为路线
+            const route = routeResponse; // 使用返回的坐标数组作为路线
             setRouteCoordinates(route); // 更新路线坐标
 
             const distance = routeResponse.best.distance;

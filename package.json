@@ -17,6 +17,8 @@
     "leaflet": "^1.9.3"
   },
   "devDependencies": {},
+  "proxy": "http://localhost:8081",
+
   "keywords": [
     "pathfinding",
     "react",
