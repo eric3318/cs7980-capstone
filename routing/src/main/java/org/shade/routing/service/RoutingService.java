@@ -4,10 +4,8 @@ package org.shade.routing.service;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ResponsePath;
 import com.graphhopper.shaded.Edge;
 import com.graphhopper.shaded.EdgeCache;
-import com.graphhopper.shaded.GraphStatus;
 import com.graphhopper.shaded.ShadedGraphHopper;
 import com.graphhopper.shaded.utils.GraphUtil;
 import com.graphhopper.storage.Graph;
@@ -21,15 +19,11 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.shade.routing.dto.BBoxDto;
 import org.shade.routing.dto.BBoxLimits;
 import org.shade.routing.dto.RouteRequest;
-import org.shade.routing.dto.ShadeProfile;
 import org.springframework.stereotype.Service;
 
 @Service
