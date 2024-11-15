@@ -4,11 +4,13 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.WeightingFactory;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
 
 public class ShadedGraphHopper extends GraphHopper {
 
   private final ShadeDataManager shadeManager;
   private final GraphStatus graphStatus;
+  @Getter
   private final EdgeCache edgeCache;
 
   public ShadedGraphHopper() {
@@ -29,12 +31,12 @@ public class ShadedGraphHopper extends GraphHopper {
     graphStatus.setRouting(true);
   }
 
-  public void attachShadeData(Map<Integer, List<List<Integer>>> shadeData) {
-    shadeManager.generateEdgeShadeProfiles(shadeData);
+  public GraphStatus getGraphStatus() {
+    return GraphStatus.getInstance();
   }
 
-  public EdgeCache getEdgeCache() {
-    return edgeCache;
+  public void attachShadeData(Map<Integer, List<List<Integer>>> shadeData) {
+    shadeManager.generateEdgeShadeProfiles(shadeData);
   }
 
   public void clearShadeData() {
