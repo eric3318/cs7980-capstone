@@ -15,4 +15,8 @@ public class EdgeCache {
     return cache.get(edgeId);
   }
 
+  public boolean contains(int edgeId) {
+    return cache.containsKey(edgeId);
+  }
+
 }
