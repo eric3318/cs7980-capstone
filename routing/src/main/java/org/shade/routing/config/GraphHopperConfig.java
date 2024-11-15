@@ -2,6 +2,7 @@ package org.shade.routing.config;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
+import com.graphhopper.shaded.GraphStatus;
 import com.graphhopper.shaded.ShadedGraphHopper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,10 @@ public class GraphHopperConfig {
     hopper.setProfiles(
         new Profile("shaded"));
     hopper.importOrLoad();
+    GraphStatus graphStatus = ((ShadedGraphHopper) hopper).getGraphStatus();
+    if (!graphStatus.getRouting()) {
+      graphStatus.setRouting(true);
+    }
     return hopper;
   }
 }
