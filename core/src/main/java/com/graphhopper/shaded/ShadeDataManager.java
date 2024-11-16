@@ -23,6 +23,13 @@ public class ShadeDataManager {
     return shadeMap.get(edgeId).getShadeCoverage();
   }
 
+  public double getShadeCoverage(int edgeId) {
+    if (!shadeMap.containsKey(edgeId)) {
+      throw new RuntimeException("Edge does not exist in shade map");
+    }
+    return shadeMap.get(edgeId).getShadeCoverage();
+  }
+
   public boolean withinRange(EdgeIteratorState edgeState) {
     return shadeMap.containsKey(edgeState.getEdge());
   }

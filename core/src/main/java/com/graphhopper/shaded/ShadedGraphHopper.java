@@ -39,6 +39,10 @@ public class ShadedGraphHopper extends GraphHopper {
     shadeManager.generateEdgeShadeProfiles(shadeData);
   }
 
+  public double getEdgeShade(int edgeId) {
+    return shadeManager.getShadeCoverage(edgeId);
+  }
+
   public void clearShadeData() {
     shadeManager.clearData();
   }
