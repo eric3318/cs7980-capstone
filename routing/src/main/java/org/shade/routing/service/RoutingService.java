@@ -32,7 +32,9 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.shade.routing.dto.BBoxDto;
 import org.shade.routing.dto.BBoxLimits;
+import org.shade.routing.dto.EdgeDetail;
 import org.shade.routing.dto.RouteRequest;
+import org.shade.routing.dto.RouteResponse;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,7 +43,7 @@ public class RoutingService {
 
   private final GraphHopper hopper;
 
-  public Map<String, List<?>> getRoute(RouteRequest routeRequest) {
+  public RouteResponse getRoute(RouteRequest routeRequest) {
 
     ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
     ((ShadedGraphHopper) hopper).setShadePref(routeRequest.shadePref());
@@ -50,37 +52,31 @@ public class RoutingService {
         routeRequest.toLat(), routeRequest.toLon());
     ghRequest.setProfile("shaded");
     ghRequest.setAlgorithm("astar");
-    ghRequest.setPathDetails(Arrays.asList(Parameters.Details.EDGE_ID, Parameters.Details.WEIGHT));
+    ghRequest.setPathDetails(Arrays.asList(Parameters.Details.EDGE_ID, Details.DISTANCE));
 
     GHResponse ghResponse = hopper.route(ghRequest);
 
     ResponsePath bestPath = ghResponse.getBest();
 
     List<PathDetail> edgeIdDetails = bestPath.getPathDetails().get(Parameters.Details.EDGE_ID);
-    List<PathDetail> weightDetails = bestPath.getPathDetails().get(Parameters.Details.WEIGHT);
-
-    Map<String, List<?>> result = new HashMap<>();
-    List<Double> shadeCoverage = edgeIdDetails.stream()
-        .map(e -> ((ShadedGraphHopper) hopper).getEdgeShade((Integer) e.getValue())).toList();
-
+    List<PathDetail> distanceDetails = bestPath.getPathDetails().get(Details.DISTANCE);
     PointList pointList = bestPath.getPoints();
-    List<Double[]> pathPoints = new ArrayList<>();
-    for (GHPoint p : pointList) {
-      pathPoints.add(p.toGeoJson());
-    }
-    List<Double> subEdgeCoverage = new ArrayList<>();
-    for (int edgeIndex = 0; edgeIndex< edgeIdDetails.size(); edgeIndex++) {
-      int edgeLength = edgeIdDetails.get(edgeIndex).getLast() - edgeIdDetails.get(edgeIndex).getFirst();
-      for (int i = 0; i < edgeLength; i++) {
-        subEdgeCoverage.add(shadeCoverage.get(edgeIndex));
-      }
+
+    Map<Integer, EdgeDetail> edgeDetails = new HashMap<>();
+
+    for (int i = 0; i < edgeIdDetails.size(); i++) {
+      Integer edgeId = (Integer) edgeIdDetails.get(i).getValue();
+      double distance = (double) distanceDetails.get(i).getValue();
+      double shadeCoverage = ((ShadedGraphHopper) hopper).getEdgeShade(edgeId);
+      edgeDetails.put(edgeId, new EdgeDetail(shadeCoverage, distance));
     }
 
-    result.put("pathPoints", pathPoints);
-    result.put("shadeCoverage", subEdgeCoverage);
+    List<Double[]> pathPoints = new ArrayList<>();
+    pointList.forEach(p -> pathPoints.add(p.toGeoJson()));
+    RouteResponse response = new RouteResponse(pathPoints, edgeDetails);
 
     ((ShadedGraphHopper) hopper).clearShadeData();
-    return result;
+    return response;
   }
 
   public List<BBoxDto> getEdges(double fromLat, double fromLon, double toLat, double toLon) {
