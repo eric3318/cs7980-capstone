@@ -68,9 +68,16 @@ public class RoutingService {
     for (GHPoint p : pointList) {
       pathPoints.add(p.toGeoJson());
     }
+    List<Double> subEdgeCoverage = new ArrayList<>();
+    for (int edgeIndex = 0; edgeIndex< edgeIdDetails.size(); edgeIndex++) {
+      int edgeLength = edgeIdDetails.get(edgeIndex).getLast() - edgeIdDetails.get(edgeIndex).getFirst();
+      for (int i = 0; i < edgeLength; i++) {
+        subEdgeCoverage.add(shadeCoverage.get(edgeIndex));
+      }
+    }
 
     result.put("pathPoints", pathPoints);
-    result.put("shadeCoverage", shadeCoverage);
+    result.put("shadeCoverage", subEdgeCoverage);
 
     ((ShadedGraphHopper) hopper).clearShadeData();
     return result;
