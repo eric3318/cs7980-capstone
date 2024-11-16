@@ -15,6 +15,7 @@ function App() {
         .slice(0, 16);
     const defaultPreference = 0.5;
     const defaultSpeed = 2.5;
+    const [distance, setDistance] = useState(null);
 
     const [initialCenter, setInitialCenter] = useState(defaultCityCoordinates);
     const [city, setCity] = useState('vancouver');
@@ -49,7 +50,7 @@ function App() {
 
     // 获取阴影数据
     const fetchShadowData = async (edgesData) => {
-        const response = await fetch(`http://localhost:3000/api/shade`, {
+        const response = await fetch(`api/shade`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -104,18 +105,22 @@ function App() {
 
             // Step 3: 计算路径
             const routeResponse = await calculateRoute(shadeData.shadeProfile);
-            console.log(routeResponse);
             const jsonData = JSON.stringify(routeResponse, null, 2);
-
+           
+ 
             // 假设返回数据中包含路线坐标
             const route = routeResponse.path; // 使用返回的坐标数组作为路线
             setRouteCoordinates(route); // 更新路线坐标
             console.log(routeResponse.edgeDetails);
-            const distance = routeResponse.edgeDetails;
-            const travelTimeSeconds = distance / speed;
-            const startTime = new Date(time);
-            const calculatedEndTime = new Date(startTime.getTime() + travelTimeSeconds * 1000);
-
+            //const travelTimeSeconds = distance / speed;
+            //const startTime = new Date(time);
+            //const calculatedEndTime = new Date(startTime.getTime() + travelTimeSeconds * 1000);
+            const distance1 = Object.values(routeResponse.edgeDetails).reduce(
+                (sum, edge) => sum + edge.distance,
+                0
+              ); 
+              setDistance(distance1); // 更新状态
+              /*   
             const pacificEndTime = calculatedEndTime.toLocaleString('en-US', {
                 timeZone: 'America/Los_Angeles',
                 year: 'numeric',
@@ -125,6 +130,7 @@ function App() {
                 minute: '2-digit'
             });
             setEndTime(pacificEndTime);
+            */
         } catch (error) {
             console.error("Error generating route:", error);
         }
@@ -137,6 +143,7 @@ function App() {
         setStartPoint(null);
         setEndPoint(null);
         setEndTime(null);
+        setDistance(null)
         setRouteCoordinates([]); // 清空路线
     };
 
@@ -160,59 +167,23 @@ function App() {
             {/*<SpeedControl speed={speed} setSpeed={setSpeed} />*/}
 
             <button onClick={handleGenerateRoute}>Generate Route</button>
-            <button onClick={handleRefresh}>Refresh</button>
+            <button onClick={handleRefresh}>Reset</button>
+   
 
-            <div>
-                {startPoint && (
-                    <div>
-                        <p>Start Point:</p>
-                        <label>
-                            Latitude:
-                            <input
-                                type="number"
-                                value={startPoint.lat}
-                                onChange={(e) => setStartPoint(prev => ({ ...prev, lat: parseFloat(e.target.value) }))}
-                            />
-                        </label>
-                        <label>
-                            Longitude:
-                            <input
-                                type="number"
-                                value={startPoint.lng}
-                                onChange={(e) => setStartPoint(prev => ({ ...prev, lng: parseFloat(e.target.value) }))}
-                            />
-                        </label>
-                    </div>
-                )}
-                {endPoint && (
-                    <div>
-                        <p>End Point:</p>
-                        <label>
-                            Latitude:
-                            <input
-                                type="number"
-                                value={endPoint.lat}
-                                onChange={(e) => setEndPoint(prev => ({ ...prev, lat: parseFloat(e.target.value) }))}
-                            />
-                        </label>
-                        <label>
-                            Longitude:
-                            <input
-                                type="number"
-                                value={endPoint.lng}
-                                onChange={(e) => setEndPoint(prev => ({ ...prev, lng: parseFloat(e.target.value) }))}
-                            />
-                        </label>
-                    </div>
-                )}
-            </div>
-
-            {endTime && (
+            {/*endTime && (
                 <div>
                     <h2>Journey End Time</h2>
                     <p>Estimated Arrival: {endTime}</p>
                 </div>
-            )}
+            )*/}
+            <div>
+                {distance !== null && (
+                <div>
+                <h2>Total Distance</h2>
+                <p>Calculated Distance: {distance.toFixed(2)} meters</p>
+                </div>
+                )}
+            </div>
         </div>
     );
 }
