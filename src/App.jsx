@@ -67,7 +67,8 @@ function App() {
             fromLon: startPoint.lng,
             toLat: endPoint.lat,
             toLon: endPoint.lng,
-            shadeData: shadeProfile
+            shadeData: shadeProfile,
+            shadePref: preference,
         };
 
         const response = await fetch("/api/route", {
@@ -107,10 +108,10 @@ function App() {
             const jsonData = JSON.stringify(routeResponse, null, 2);
 
             // 假设返回数据中包含路线坐标
-            const route = routeResponse; // 使用返回的坐标数组作为路线
+            const route = routeResponse.path; // 使用返回的坐标数组作为路线
             setRouteCoordinates(route); // 更新路线坐标
-
-            const distance = routeResponse.best.distance;
+            console.log(routeResponse.edgeDetails);
+            const distance = routeResponse.edgeDetails;
             const travelTimeSeconds = distance / speed;
             const startTime = new Date(time);
             const calculatedEndTime = new Date(startTime.getTime() + travelTimeSeconds * 1000);
