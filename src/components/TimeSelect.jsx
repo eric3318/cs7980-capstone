@@ -14,16 +14,17 @@ function TimeSelect({ time, setTime }) {
     };
 
     return (
-        <div>
-            <label htmlFor="time">Select Time (Pacific Time):</label>
-            <input
-                type="datetime-local"
-                id="time"
-                value={time}
-                onChange={handleTimeChange}
-            />
-        </div>
-    );
-}
+            <div className="time-select-container">
+                <label htmlFor="time" className="time-select-label">Select Time (Pacific Time):</label>
+                <input
+                    type="datetime-local"
+                    id="time"
+                    className="time-select-input"
+                    value={time}
+                    onChange={handleTimeChange}
+                />
+            </div>
+        );
+    }
 
 export default TimeSelect;

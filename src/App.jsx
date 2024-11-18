@@ -5,6 +5,7 @@ import PreferenceSlider from './components/PreferenceSlider.jsx';
 import SpeedControl from './components/SpeedControl.jsx';
 import MapComponent from './components/MapComponent.jsx';
 import LoadingIndicator from './components/LoadingIndicator.jsx';
+import './index.css';
 
 function App() {
     const [loading, setLoading] = useState(false);
@@ -85,61 +86,61 @@ function App() {
         return await response.json();
     };
 
-    // 生成路径
-    const handleGenerateRoute = async () => {
-        if (!startPoint || !endPoint) {
-            alert('Please select both a starting point and an endpoint');
-            return;
-        }
-        setLoading(true); // 开始加载
 
-        try {
-            // Step 1: 获取边缘数据
-            const edgesParams = {
-                fromLat: startPoint.lat,
-                fromLon: startPoint.lng,
-                toLat: endPoint.lat,
-                toLon: endPoint.lng,
-            };
-            const edgesData = await fetchEdges(edgesParams);
+const handleGenerateRoute = async () => {
+    if (!startPoint || !endPoint) {
+        alert('Please select both a starting point and an endpoint');
+        return;
+    }
+    setLoading(true); // 开始加载
 
-            // Step 2: 获取阴影数据
-            const shadeData = await fetchShadowData(edgesData);
+    try {
+        // Step 1: 获取边缘数据
+        const edgesParams = {
+            fromLat: startPoint.lat,
+            fromLon: startPoint.lng,
+            toLat: endPoint.lat,
+            toLon: endPoint.lng,
+        };
+        const edgesData = await fetchEdges(edgesParams);
 
-            // Step 3: 计算路径
-            const routeResponse = await calculateRoute(shadeData.shadeProfile);
-            const jsonData = JSON.stringify(routeResponse, null, 2);
-           
- 
-            // 假设返回数据中包含路线坐标
-            const route = routeResponse.path; // 使用返回的坐标数组作为路线
-            setRouteCoordinates(route); // 更新路线坐标
-            console.log(routeResponse.edgeDetails);
-            //const travelTimeSeconds = distance / speed;
-            //const startTime = new Date(time);
-            //const calculatedEndTime = new Date(startTime.getTime() + travelTimeSeconds * 1000);
-            const distance1 = Object.values(routeResponse.edgeDetails).reduce(
-                (sum, edge) => sum + edge.distance,
-                0
-              ); 
-              setDistance(distance1); // 更新状态
-              /*   
-            const pacificEndTime = calculatedEndTime.toLocaleString('en-US', {
-                timeZone: 'America/Los_Angeles',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            setEndTime(pacificEndTime);
-            */
-        } catch (error) {
-            console.error("Error generating route:", error);
-        }finally {
-                 setLoading(false); // 请求完成，结束加载
-             }
-    };
+        // Step 2: 获取阴影数据
+        const shadeData = await fetchShadowData(edgesData);
+
+        // Step 3: 计算路径
+        const routeResponse = await calculateRoute(shadeData.shadeProfile);
+
+        // 解析路径数据
+        const edgeDetails = routeResponse.edgeDetails; // 每条路径段的覆盖率信息
+        const pathCoordinates = routeResponse.path;
+
+        // 将路径点和覆盖率结合，生成渲染所需的数据
+        const edgesWithCoverage = Object.keys(edgeDetails).map((edgeId, index) => ({
+            coordinates: [
+                [pathCoordinates[index][1], pathCoordinates[index][0]], // 起点 (纬度, 经度)
+                [pathCoordinates[index + 1]?.[1], pathCoordinates[index + 1]?.[0]] // 终点 (纬度, 经度)
+            ],
+            coverage: edgeDetails[edgeId].shadeCoverage
+        }));
+
+        // 更新状态
+        setRouteCoordinates(edgesWithCoverage);
+
+        // 更新距离
+        const totalDistance = Object.values(edgeDetails).reduce(
+            (sum, edge) => sum + edge.distance,
+            0
+        );
+        setDistance(totalDistance); // 更新距离
+
+    } catch (error) {
+        console.error("Error generating route:", error);
+    } finally {
+        setLoading(false); // 请求完成，结束加载
+    }
+};
+
+
 
     const handleRefresh = () => {
         setTime(pacificISOString);
@@ -154,51 +155,61 @@ function App() {
     };
 
     return (
-        <div>
-            <h1>Shadiest Path Finder</h1>
+            <div className="container">
+                <h1>Shadiest Path Finder</h1>
 
-            <CitySelect city={city} setCity={handleCityChange} />
-
-            <MapComponent
-                initialCenter={initialCenter}
-                startPoint={startPoint}
-                endPoint={endPoint}
-                setStartPoint={setStartPoint}
-                setEndPoint={setEndPoint}
-                routeCoordinates={routeCoordinates} // 传递路线坐标
-            />
-
-            <TimeSelect time={time} setTime={setTime} />
-            <PreferenceSlider preference={preference} setPreference={setPreference} />
-            {/*<SpeedControl speed={speed} setSpeed={setSpeed} />*/}
-
-            {/* 使用加载指示器 */}
-            {loading && <LoadingIndicator />}
-
-
-            {/* <button onClick={handleGenerateRoute}>Generate Route</button>*/}
-            <button onClick={handleGenerateRoute} disabled={loading}>
-                            Generate Route
-                        </button>
-            <button onClick={handleRefresh}>Reset</button>
-   
-
-            {/*endTime && (
-                <div>
-                    <h2>Journey End Time</h2>
-                    <p>Estimated Arrival: {endTime}</p>
+                {/* 城市选择 */}
+                <div style={{ marginBottom: '15px' }}>
+                    <CitySelect city={city} setCity={handleCityChange} />
                 </div>
-            )*/}
-            <div>
+
+                {/* 地图组件 */}
+{/*                 <div style={{ marginBottom: '20px' }}> */}
+                    <MapComponent
+                        initialCenter={initialCenter}
+                        startPoint={startPoint}
+                        endPoint={endPoint}
+                        setStartPoint={setStartPoint}
+                        setEndPoint={setEndPoint}
+                        routeCoordinates={routeCoordinates}
+                    />
+
+
+                {/* 时间选择和偏好滑块 */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <div style={{ flex: 1, marginRight: '10px' }}>
+                        <TimeSelect time={time} setTime={setTime} />
+                    </div>
+                    <div style={{ flex: 1, marginLeft: '10px' }}>
+                        <PreferenceSlider preference={preference} setPreference={setPreference} />
+                    </div>
+                </div>
+
+                {/* 按钮区域 */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '20px' }}>
+                    <button onClick={handleGenerateRoute} disabled={loading}>
+                        Generate Route
+                    </button>
+                    <button onClick={handleRefresh}>Reset</button>
+                </div>
+
+                {/* 加载指示器 */}
+                {loading && (
+                    <div style={{ marginBottom: '20px' }}>
+                        <LoadingIndicator />
+                    </div>
+                )}
+
+                {/* 距离显示 */}
                 {distance !== null && (
-                <div>
-                <h2>Total Distance</h2>
-                <p>Calculated Distance: {distance.toFixed(2)} meters</p>
-                </div>
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                        <h2>Total Distance</h2>
+                        <p>{distance.toFixed(2)} meters</p>
+                    </div>
                 )}
             </div>
-        </div>
-    );
-}
+        );
+    }
+
 
 export default App;
