@@ -21,12 +21,23 @@ public class GraphUtil {
     return ((1.0 - (mercatorY / Math.PI)) / 2.0 * Math.pow(2.0, BUILDING_ZOOM)) * TILE_SIZE;
   }
 
-  public static double[] getBBox(double fromLat, double fromLon, double toLat, double toLon) {
-    double minLat = Math.min(fromLat, toLat);
-    double maxLat = Math.max(fromLat, toLat);
-    double minLon = Math.min(fromLon, toLon);
-    double maxLon = Math.max(fromLon, toLon);
-    return new double[]{minLon, maxLon, minLat, maxLat};
+  public static double[] getBBox(double minLon, double maxLon, double minLat, double maxLat,
+      double magFactor) {
+    double centerLat = (minLat + maxLat) / 2.0;
+    double centerLon = (minLon + maxLon) / 2.0;
+
+    double halfWidth = (maxLon - minLon) / 2.0;
+    double halfHeight = (maxLat - minLat) / 2.0;
+
+    double enlargedHalfWidth = halfWidth * (1 + magFactor);
+    double enlargedHalfHeight = halfHeight * (1 + magFactor);
+
+    double newMinLon = centerLon - enlargedHalfWidth;
+    double newMaxLon = centerLon + enlargedHalfWidth;
+    double newMinLat = centerLat - enlargedHalfHeight;
+    double newMaxLat = centerLat + enlargedHalfHeight;
+
+    return new double[]{newMinLon, newMaxLon, newMinLat, newMaxLat};
   }
 
   public static List<BBox> getBBoxCells(double minLon, double maxLon, double minLat,
