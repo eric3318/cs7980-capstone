@@ -1,5 +1,6 @@
 package com.graphhopper.shaded;
 
+import com.graphhopper.routing.querygraph.VirtualEdgeIterator;
 import com.graphhopper.routing.weighting.AbstractAdjustedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
@@ -23,19 +24,33 @@ public class ShadedWeighting extends AbstractAdjustedWeighting {
   @Override
   public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
     if (graphStatus.getRouting()) {
-      if (shadeManager.withinRange(edgeState)) {
-        return getEdgeWeight(superWeighting.calcEdgeWeight(edgeState, reverse),
-            shadeManager.getShadeCoverage(edgeState));
+      // todo: identify virtual edges that's within range as well and calculate the shade coverage for those
+      if (!(edgeState instanceof VirtualEdgeIterator)) {
+        if (shadeManager.withinRange(edgeState)) {
+          return getEdgeWeight(superWeighting.calcEdgeWeight(edgeState, reverse),
+              shadeManager.getShadeCoverage(edgeState));
+        }
+        return Double.POSITIVE_INFINITY;
       }
-      // this may need to be changed to positive infinity to exclude edges out of range from routes
       return superWeighting.calcEdgeWeight(edgeState, reverse);
     }
     return superWeighting.calcEdgeWeight(edgeState, reverse);
   }
 
   private double getEdgeWeight(double distanceWeight, double coverage) {
+    // todo: fix formula
     return distanceWeight * ((1 - coverage) * (1 - shadePref) + shadePref * coverage);
   }
+
+  // shadePref = 1
+  // edge a
+  // distance 20 coverage 0.4  (shaded 8)
+  // 20 * 0.4 = 8
+
+  // edge b
+  // distance 10 coverage 0.7 (shaded 7)
+  // 10 * 0.7 = 7
+
 
   @Override
   public String getName() {
