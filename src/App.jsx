@@ -4,8 +4,10 @@ import TimeSelect from './components/TimeSelect.jsx';
 import PreferenceSlider from './components/PreferenceSlider.jsx';
 import SpeedControl from './components/SpeedControl.jsx';
 import MapComponent from './components/MapComponent.jsx';
+import LoadingIndicator from './components/LoadingIndicator.jsx';
 
 function App() {
+    const [loading, setLoading] = useState(false);
     const defaultCityCoordinates = { lat: 49.2827, lng: -123.1207 }; // Vancouver's coordinates
     const defaultTime = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
     const pacificDate = new Date(defaultTime);
@@ -89,6 +91,7 @@ function App() {
             alert('Please select both a starting point and an endpoint');
             return;
         }
+        setLoading(true); // 开始加载
 
         try {
             // Step 1: 获取边缘数据
@@ -133,7 +136,9 @@ function App() {
             */
         } catch (error) {
             console.error("Error generating route:", error);
-        }
+        }finally {
+                 setLoading(false); // 请求完成，结束加载
+             }
     };
 
     const handleRefresh = () => {
@@ -145,6 +150,7 @@ function App() {
         setEndTime(null);
         setDistance(null)
         setRouteCoordinates([]); // 清空路线
+        setLoading(false); // 重置 loading 状态
     };
 
     return (
@@ -166,7 +172,14 @@ function App() {
             <PreferenceSlider preference={preference} setPreference={setPreference} />
             {/*<SpeedControl speed={speed} setSpeed={setSpeed} />*/}
 
-            <button onClick={handleGenerateRoute}>Generate Route</button>
+            {/* 使用加载指示器 */}
+            {loading && <LoadingIndicator />}
+
+
+            {/* <button onClick={handleGenerateRoute}>Generate Route</button>*/}
+            <button onClick={handleGenerateRoute} disabled={loading}>
+                            Generate Route
+                        </button>
             <button onClick={handleRefresh}>Reset</button>
    
 
