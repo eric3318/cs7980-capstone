@@ -5,6 +5,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
+import com.graphhopper.config.Profile;
 import com.graphhopper.shaded.Edge;
 import com.graphhopper.shaded.EdgeCache;
 import com.graphhopper.shaded.ShadedGraphHopper;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Envelope;
 import org.shade.routing.dto.BBoxDto;
 import org.shade.routing.dto.BBoxLimits;
 import org.shade.routing.dto.EdgeDetail;
@@ -48,10 +50,9 @@ public class RoutingService {
     ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
     ((ShadedGraphHopper) hopper).setShadePref(routeRequest.shadePref());
 
-    GHRequest ghRequest = new GHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
-        routeRequest.toLat(), routeRequest.toLon());
-    ghRequest.setProfile("shaded");
-    ghRequest.setAlgorithm("astar");
+    GHRequest ghRequest = buildGHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
+        routeRequest.toLat(), routeRequest.toLon(), "shaded", "astar");
+
     ghRequest.setPathDetails(Arrays.asList(Parameters.Details.EDGE_ID, Details.DISTANCE));
 
     GHResponse ghResponse = hopper.route(ghRequest);
@@ -79,9 +80,34 @@ public class RoutingService {
     return response;
   }
 
+  private ResponsePath doPreliminaryPathfinding(GHRequest ghRequest) {
+    GHResponse ghResponse = hopper.route(ghRequest);
+    return ghResponse.getBest();
+  }
+
+  private GHRequest buildGHRequest(double fromLat, double fromLon, double toLat, double toLon,
+      String profileName, String algorithm) {
+    GHRequest ghRequest = new GHRequest(fromLat, fromLon, toLat, toLon);
+    ghRequest.setProfile(profileName);
+    ghRequest.setAlgorithm(algorithm);
+    return ghRequest;
+  }
+
   public List<BBoxDto> getEdges(double fromLat, double fromLon, double toLat, double toLon) {
+    GHRequest prelimRequest = buildGHRequest(fromLat, fromLon, toLat, toLon, "preliminary",
+        "astar");
+    ResponsePath prelimPath = doPreliminaryPathfinding(prelimRequest);
+    Envelope prelimBBox = prelimPath.calcBBox2D();
+
+    double minLat, maxLat, minLon, maxLon;
+    minLon = prelimBBox.getMinX();
+    maxLon = prelimBBox.getMaxX();
+    minLat = prelimBBox.getMinY();
+    maxLat = prelimBBox.getMaxY();
+
     LocationIndex locationIndex = hopper.getLocationIndex();
-    double[] bounds = GraphUtil.getBBox(fromLat, fromLon, toLat, toLon);
+    // enlarge the bounding box by 20%
+    double[] bounds = GraphUtil.getBBox(minLon, maxLon, minLat, maxLat, 0.2);
     List<BBox> bBoxCells = GraphUtil.getBBoxCells(bounds[0], bounds[1], bounds[2],
         bounds[3]);
     Graph graph = hopper.getBaseGraph();

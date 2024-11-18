@@ -17,7 +17,7 @@ public class GraphHopperConfig {
     hopper.setGraphHopperLocation("target/graph-cache");
     hopper.setEncodedValuesString("car_access, car_average_speed");
     hopper.setProfiles(
-        new Profile("shaded"));
+        new Profile("shaded"), new Profile("preliminary"));
     hopper.importOrLoad();
     GraphStatus graphStatus = ((ShadedGraphHopper) hopper).getGraphStatus();
     if (!graphStatus.getRouting()) {
