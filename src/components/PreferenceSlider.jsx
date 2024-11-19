@@ -9,7 +9,7 @@ function PreferenceSlider({ preference, setPreference }) {
                 Preference
             </label>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-                <span style={{ marginRight: '10px' }}>Most shade</span>
+                <span style={{ marginRight: '10px' }}>Shortest Distance</span>
                 <input
                     type="range"
                     id="preference"
@@ -20,7 +20,7 @@ function PreferenceSlider({ preference, setPreference }) {
                     onChange={(e) => setPreference(parseFloat(e.target.value))}
                     style={{ flex: '1', margin: '0 10px' }}
                 />
-                <span style={{ marginLeft: '10px' }}>Shortest Distance</span>
+                <span style={{ marginLeft: '10px' }}>Most shade</span>
             </div>
             <p>{`Preference Value: ${preference}`}</p>
         </div>

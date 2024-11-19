@@ -14,7 +14,7 @@ L.Icon.Default.mergeOptions({
 });
 
 //这里update
-// 动态生成颜色：灰色 (阴影) 和红色 (无阴影)
+//动态生成颜色：灰色 (阴影) 和红色 (无阴影)
 const getColorByCoverage = (coverage) => {
   const startColor = [255, 0, 0];   // 红色
   const endColor = [128, 128, 128]; // 灰色
@@ -23,6 +23,7 @@ const getColorByCoverage = (coverage) => {
   const b = Math.round(startColor[2] + (endColor[2] - startColor[2]) * coverage);
   return `rgb(${r}, ${g}, ${b})`;
 };
+
 
 // 图例组件
 const Legend = () => (
@@ -105,7 +106,7 @@ function MapComponent({ initialCenter, startPoint, endPoint, setStartPoint, setE
                 key={index}
                 positions={edge.coordinates}
                 color={getColorByCoverage(edge.coverage)} // 动态颜色
-                weight={5} // 路径线宽
+                weight={6} // 路径线宽
               />
             ))}
         </MapContainer>
