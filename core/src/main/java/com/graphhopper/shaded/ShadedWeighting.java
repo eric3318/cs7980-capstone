@@ -38,8 +38,7 @@ public class ShadedWeighting extends AbstractAdjustedWeighting {
   }
 
   private double getEdgeWeight(double distanceWeight, double coverage) {
-    // todo: fix formula
-    return distanceWeight * ((1 - coverage) * (1 - shadePref) + shadePref * coverage);
+    return distanceWeight * (1 - coverage * shadePref);
   }
 
   // shadePref = 1
