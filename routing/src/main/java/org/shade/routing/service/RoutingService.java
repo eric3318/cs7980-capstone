@@ -49,6 +49,7 @@ public class RoutingService {
 
     ((ShadedGraphHopper) hopper).attachShadeData(routeRequest.shadeData());
     ((ShadedGraphHopper) hopper).setShadePref(routeRequest.shadePref());
+    EdgeCache edgeCache = ((ShadedGraphHopper) hopper).getEdgeCache();
 
     GHRequest ghRequest = buildGHRequest(routeRequest.fromLat(), routeRequest.fromLon(),
         routeRequest.toLat(), routeRequest.toLon(), "shaded", "astar");
@@ -63,18 +64,20 @@ public class RoutingService {
     List<PathDetail> distanceDetails = bestPath.getPathDetails().get(Details.DISTANCE);
     PointList pointList = bestPath.getPoints();
 
-    Map<Integer, EdgeDetail> edgeDetails = new HashMap<>();
+    List<EdgeDetail> edgeDetails = new ArrayList<>();
 
     for (int i = 0; i < edgeIdDetails.size(); i++) {
       Integer edgeId = (Integer) edgeIdDetails.get(i).getValue();
       double distance = (double) distanceDetails.get(i).getValue();
       double shadeCoverage = ((ShadedGraphHopper) hopper).getEdgeShade(edgeId);
-      edgeDetails.put(edgeId, new EdgeDetail(shadeCoverage, distance));
+      edgeDetails.add(
+          new EdgeDetail(edgeId, edgeCache.get(edgeId).points(), shadeCoverage, distance));
     }
 
     List<Double[]> pathPoints = new ArrayList<>();
     pointList.forEach(p -> pathPoints.add(p.toGeoJson()));
-    RouteResponse response = new RouteResponse(pathPoints, edgeDetails);
+    RouteResponse response = new RouteResponse(pathPoints, edgeDetails, bestPath.getRouteWeight(),
+        bestPath.getDistance());
 
     ((ShadedGraphHopper) hopper).clearShadeData();
     return response;
