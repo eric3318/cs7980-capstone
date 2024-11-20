@@ -53,12 +53,16 @@ function App() {
 
     // 获取阴影数据
     const fetchShadowData = async (edgesData) => {
+        const timestamp = new Date(time).getTime(); // Convert the selected time to unix timestamp in milliseconds
         const response = await fetch(`api/shade`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ bBoxes: edgesData })
+            body: JSON.stringify({
+                        bBoxes: edgesData,
+                        timestamp: timestamp // Include the timestamp in the request body
+                    })
         });
         if (!response.ok) throw new Error("Error fetching shadow data");
         return await response.json();
@@ -252,28 +256,6 @@ const handleGenerateRoute = async () => {
         setLoading(false); // 请求完成，结束加载
     }
 };
-
-// 检查是否在范围内的辅助函数
-// const isWithinRange = (point1, point2, tolerance = 0.0002) => {
-//   // point1 和 point2 是 [经度, 纬度]
-//   const [lon1, lat1] = point1;
-//   const [lon2, lat2] = point2;
-//   const distance = Math.sqrt((lon1 - lon2) ** 2 + (lat1 - lat2) ** 2);
-//   return distance <= tolerance; // 根据需要调整 tolerance 的大小
-// };
-//
-// const isWithinRectangle = (lon1, lat1, lon2, lat2, pathEnd) => {
-//   const [pathLon, pathLat] = pathEnd;
-//
-//   // 计算矩形范围
-//   const minLon = Math.min(lon1, lon2);
-//   const maxLon = Math.max(lon1, lon2);
-//   const minLat = Math.min(lat1, lat2);
-//   const maxLat = Math.max(lat1, lat2);
-//
-//   // 判断点是否在范围内
-//   return pathLon >= minLon && pathLon <= maxLon && pathLat >= minLat && pathLat <= maxLat;
-// };
 
 
 

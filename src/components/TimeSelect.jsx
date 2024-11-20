@@ -1,17 +1,23 @@
 import React from 'react';
+import { toDate, toZonedTime } from "date-fns-tz"; // Corrected imports
+import { format } from "date-fns";
 
 function TimeSelect({ time, setTime }) {
-    const handleTimeChange = (e) => {
-        const localTime = new Date(e.target.value);
+  const handleTimeChange = (e) => {
+    const selectedTime = e.target.value; // User-selected time in "yyyy-MM-ddTHH:mm" format
+    const timeZone = "America/Los_Angeles";
 
-        // 将本地时间转换为太平洋时间
-        const pacificTime = new Date(localTime.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    // Parse the user-selected time into a Date object
+    const localTime = toDate(selectedTime, { timeZone });
 
-        // 格式化为 "yyyy-MM-ddTHH:mm" 的格式
-        const pacificISOString = pacificTime.toISOString().slice(0, 16);
+    // Convert the Date object into the specified Pacific Time zone
+    const pacificTime = toZonedTime(localTime, timeZone);
 
-        setTime(pacificISOString);
-    };
+    // Format the time for storage/display
+    const pacificISOString = format(pacificTime, "yyyy-MM-dd'T'HH:mm");
+
+    setTime(pacificISOString); // Store the formatted Pacific Time
+  };
 
     return (
             <div className="time-select-container">
