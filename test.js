@@ -1,10 +1,10 @@
 let response;
 
 let params = {
-  "fromLat": 49.23636,
-  "fromLon": -123.00546,
-  "toLat": 49.22353,
-  "toLon": -122.97177,
+  "fromLat": 49.290884010747604,
+  "fromLon": -123.13595061368675,
+  "toLat": 49.279613235442426,
+  "toLon": -123.13228753227474,
 }
 let queryString = "?"
 
@@ -25,7 +25,9 @@ try {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({bBoxes: edgesData})
+    body: JSON.stringify({
+      timestamp: 1713168000000,
+      bBoxes: edgesData})
   });
   if (!response.ok) {
     throw new Error("Error fetching shade data");
@@ -34,12 +36,12 @@ try {
   console.log(Object.keys(shadeData.shadeProfile).length);
 
   let routeRequest = {
-    "fromLat": 49.23185,
-    "fromLon": -122.99422,
-    "toLat": 49.22963,
-    "toLon": -122.98647,
+    "fromLat": 49.290884010747604,
+    "fromLon": -123.13595061368675,
+    "toLat": 49.279613235442426,
+    "toLon": -123.13228753227474,
     "shadeData": shadeData.shadeProfile,
-    shadePref: 0.3,
+    shadePref: 0.6,
   }
 
   response = await fetch("http://localhost:8081/api/route", {

@@ -23,7 +23,7 @@ async function initializeBrowser() {
 }
 
 app.post('/api/shade', async (req, res) => {
-  const {bBoxes} = req.body;
+  const {bBoxes, timestamp} = req.body;
   try {
     const browser = await initializeBrowser();
     const page = await browser.newPage();
@@ -59,6 +59,7 @@ app.post('/api/shade', async (req, res) => {
     
         const numPoints = 10;
         const boundingBoxes = ${JSON.stringify(bBoxes)}
+        const time = new Date(${timestamp});
         
         const groups = []
         const groupMetaDataArr = []
@@ -175,7 +176,7 @@ app.post('/api/shade', async (req, res) => {
                       
             const output = shadeMap._generateShadeProfile({
               locations: locations,
-              dates:[new Date(1713232200000)],
+              dates:[time],
               sunColor: [255, 255, 255, 255],
               shadeColor: [0, 0, 0, 255]
             });
