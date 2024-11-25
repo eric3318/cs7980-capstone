@@ -1,0 +1,16 @@
+.legend-container {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.legend-container div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-container span {
+  font-weight: bold;
+}
