@@ -51,7 +51,7 @@ npm start
 ```
 
 ### Usage
-Navigate to http://localhost:3000 in browser. You can choose origin and destination
+Navigate to http://localhost:3001 in browser. You can choose origin and destination
 by clicking on the map, and select your preference for shade. Press "Generate" button 
 to generate a route and "Reset" for a new trip.
 
