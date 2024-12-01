@@ -15,6 +15,10 @@
     "jsdom": "^25.0.1",
     "mapbox-gl": "^3.7.0",
     "mapbox-gl-shadow-simulator": "^0.60.0",
-    "puppeteer": "^23.5.0"
+    "puppeteer": "^23.5.0",
+    "puppeteer-cluster": "^0.24.0"
+  },
+  "devDependencies": {
+    "prettier": "3.4.1"
   }
 }
